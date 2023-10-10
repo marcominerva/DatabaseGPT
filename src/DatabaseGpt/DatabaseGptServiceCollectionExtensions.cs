@@ -7,7 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Polly;
 using Polly.Retry;
 
-namespace DatabaseGpt.Services;
+namespace DatabaseGpt;
 
 public static class DatabaseGptServiceCollectionExtensions
 {

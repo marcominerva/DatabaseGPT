@@ -8,7 +8,7 @@ using Microsoft.Extensions.Options;
 using Polly;
 using Polly.Registry;
 
-namespace DatabaseGpt.Services;
+namespace DatabaseGpt;
 
 internal class DatabaseGptClient : IDatabaseGptClient
 {

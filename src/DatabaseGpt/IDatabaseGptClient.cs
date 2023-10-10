@@ -1,6 +1,6 @@
 ﻿using System.Data;
 
-namespace DatabaseGpt.Services;
+namespace DatabaseGpt;
 
 public interface IDatabaseGptClient
 {

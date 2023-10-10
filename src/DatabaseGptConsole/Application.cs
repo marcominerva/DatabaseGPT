@@ -1,11 +1,11 @@
 ﻿using ConsoleTables;
+using DatabaseGpt;
 using DatabaseGpt.Exceptions;
 using DatabaseGpt.Extensions;
-using DatabaseGpt.Services;
 using DatabaseGpt.Settings;
 using Microsoft.Extensions.Options;
 
-namespace DatabaseGpt;
+namespace DatabaseGptConsole;
 
 internal class Application
 {

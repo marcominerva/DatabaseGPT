@@ -3,9 +3,11 @@ Query a generic SQL Server database using natural language.
 
 Thanks to [Adam Buckley](https://github.com/happyadam73/tsql-chatgpt) for the [original inspiration](https://www.linkedin.com/pulse/query-your-data-azure-sql-using-natural-language-chatgpt-adam-buckley/) for this project.
 
-### Configuration
+![](https://raw.githubusercontent.com/marcominerva/DatabaseGPT/master/assets/DatabaseGptConsole.gif)
 
-The [DatabaseGptConsole](https://github.com/marcominerva/DatabaseGPT/tree/master/src/DatabaseGptConsole) project is a .NET console application that can be used to test the library.
+### Usage
+
+The [DatabaseGptConsole](https://github.com/marcominerva/DatabaseGPT/tree/master/src/DatabaseGptConsole) project is a .NET console application that can be used to test the library. It requires .NET 7.0 SDK or later. If you just want to run the application, you can safely download the binaries from the [Releases section](https://github.com/marcominerva/DatabaseGPT/releases/tag/v1.0).
 
 You need to set the required values in the [appsettings.json](https://github.com/marcominerva/DatabaseGPT/blob/master/src/DatabaseGptConsole/appsettings.json) file:
 
@@ -28,7 +30,9 @@ You need to set the required values in the [appsettings.json](https://github.com
 }
 ```
 
-### Usage
+For more information about how to configure the ChatGPT integration, refer to the documentation of [ChatGptNet](https://github.com/marcominerva/ChatGptNet).
+
+### Configuration
 
 The system works by using an OpenAI model to generate a SQL query from a natural language question, reading the list of the available tables with their structure. If table names and columns are well defined, the library should be able to automatically determine what tables to use and how to join them. For example:
 

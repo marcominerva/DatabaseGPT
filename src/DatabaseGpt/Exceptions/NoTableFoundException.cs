@@ -11,8 +11,8 @@ public class NoTableFoundException : Exception
     {
     }
 
-    public NoTableFoundException(string message, Exception inner)
-        : base(message, inner)
+    public NoTableFoundException(string message, Exception innerException)
+        : base(message, innerException)
     {
     }
 }
