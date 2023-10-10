@@ -122,18 +122,6 @@ internal class DatabaseGptClient : IDatabaseGptClient
 
         foreach (var table in splittedTableNames)
         {
-            //var query = $"""
-            //SELECT STRING_AGG(
-            //'[' + COLUMN_NAME + '] ' + 
-            //UPPER(DATA_TYPE) + ISNULL('(' + IIF(CHARACTER_MAXIMUM_LENGTH = -1, 'MAX', CAST(CHARACTER_MAXIMUM_LENGTH AS VARCHAR(10))) + ')','') + ' ' + 
-            //CASE WHEN IS_NULLABLE = 'YES' THEN 'NULL' ELSE 'NOT NULL' END
-            //,',')
-            //--WITHIN GROUP (ORDER BY ORDINAL_POSITION ASC)
-            //FROM INFORMATION_SCHEMA.COLUMNS
-            //WHERE 
-            //	TABLE_SCHEMA = @schema AND TABLE_NAME = @table AND COLUMN_NAME NOT IN @excludedColumns
-            //""";
-
             var query = $"""
                 SELECT STUFF(
                 	(SELECT ',' + '[' + COLUMN_NAME + '] ' + 
