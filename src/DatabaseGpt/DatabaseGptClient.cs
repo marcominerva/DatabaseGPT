@@ -148,7 +148,7 @@ internal class DatabaseGptClient : IDatabaseGptClient
                 """;
 
             var columns = await sqlContext.GetObjectAsync<string>(query, new { schema = table.Schema, table = table.Name, ExcludedColumns = excludedColumns });
-            result.AppendLine($"CREATE TABLE [{table.Schema}].[{table.Name}] ({columns})';");
+            result.AppendLine($"CREATE TABLE [{table.Schema}].[{table.Name}] ({columns});");
         }
 
         return result.ToString();
