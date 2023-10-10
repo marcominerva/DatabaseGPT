@@ -1,4 +1,9 @@
 # DatabaseGPT
+
+[![Lint Code Base](https://github.com/marcominerva/DatabaseGPT/actions/workflows/linter.yml/badge.svg)](https://github.com/marcominerva/DatabaseGPT/actions/workflows/linter.yml)
+[![CodeQL](https://github.com/marcominerva/DatabaseGPT/actions/workflows/codeql.yml/badge.svg)](https://github.com/marcominerva/DatabaseGPT/actions/workflows/codeql.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/marcominerva/TinyHelpers/blob/master/LICENSE)
+
 Query a generic SQL Server database using natural language.
 
 Thanks to [Adam Buckley](https://github.com/happyadam73/tsql-chatgpt) for the [original inspiration](https://www.linkedin.com/pulse/query-your-data-azure-sql-using-natural-language-chatgpt-adam-buckley/) for this project.
