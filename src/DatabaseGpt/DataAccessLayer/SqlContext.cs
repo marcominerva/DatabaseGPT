@@ -34,7 +34,12 @@ internal class SqlContext : ISqlContext
         connection = new SqlConnection(options.ConnectionString);
     }
 
-    public Task<IDataReader> GetDataReaderAsync(string sql, object? param = null, IDbTransaction? transaction = null, CommandType? commandType = null) => Connection.ExecuteReaderAsync(sql, param, transaction, commandType: commandType);
+    public Task<IDataReader> GetDataReaderAsync(string sql, object? param = null, IDbTransaction? transaction = null, CommandType? commandType = null)
+    {
+        ThrowIfDisposed();
+
+        return Connection.ExecuteReaderAsync(sql, param, transaction, commandType: commandType);
+    }
 
     public Task<IEnumerable<T>> GetDataAsync<T>(string sql, object? param = null, IDbTransaction? transaction = null, CommandType? commandType = null)
         where T : class
