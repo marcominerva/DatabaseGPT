@@ -8,7 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="ConsoleTables" Version="2.5.0" />
+        <PackageReference Include="Spectre.Console" Version="0.47.0" />
     </ItemGroup>
 
     <ItemGroup>
