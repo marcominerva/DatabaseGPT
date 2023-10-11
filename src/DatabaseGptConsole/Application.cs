@@ -1,6 +1,7 @@
 ﻿using DatabaseGpt;
 using DatabaseGpt.Exceptions;
 using DatabaseGpt.Extensions;
+using DatabaseGpt.Models;
 using DatabaseGpt.Settings;
 using Microsoft.Extensions.Options;
 using Spectre.Console;
@@ -37,23 +38,23 @@ internal class Application
 
                 return default;
             },
-            OnCandidateTablesFound = (tables, _) =>
+            OnCandidateTablesFound = (args, _) =>
             {
                 AnsiConsole.WriteLine();
                 AnsiConsole.WriteLine();
 
-                AnsiConsole.Write($"I think the following tables might be useful: {string.Join(", ", tables)}.");
+                AnsiConsole.Write($"I think the following tables might be useful: {string.Join(", ", args.Tables)}.");
 
                 return default;
             },
-            OnQueryGenerated = (sql, _) =>
+            OnQueryGenerated = (args, _) =>
             {
                 AnsiConsole.WriteLine();
                 AnsiConsole.WriteLine();
 
                 AnsiConsole.WriteLine("The query to answer the question should be the following:");
 
-                AnsiConsole.WriteLine(sql);
+                AnsiConsole.WriteLine(args.Sql);
                 AnsiConsole.WriteLine();
 
                 return default;
@@ -75,7 +76,8 @@ internal class Application
                     using var reader = await databaseGptClient.ExecuteNaturalLanguageQueryAsync(conversationId, question, options);
 
                     var table = new Table();
-                    table.AddColumns(reader.GetColumnNames().ToArray());
+                    var columns = reader.GetColumnNames().Select(c => $"[olive]{c}[/]").ToArray();
+                    table.AddColumns(columns);
 
                     while (reader.Read())
                     {
@@ -107,7 +109,7 @@ internal class Application
             catch (Exception ex)
             {
                 AnsiConsole.WriteException(ex,
-                    ExceptionFormats.ShortenPaths | ExceptionFormats.ShortenTypes | ExceptionFormats.ShortenMethods | ExceptionFormats.ShowLinks);
+                    ExceptionFormats.ShortenPaths | ExceptionFormats.ShortenTypes | ExceptionFormats.ShortenMethods);
             }
             finally
             {
