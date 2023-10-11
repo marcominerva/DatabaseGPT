@@ -33,8 +33,7 @@ public static class DatabaseGptServiceCollectionExtensions
                 ShouldHandle = new PredicateBuilder().Handle<ArgumentOutOfRangeException>().Handle<IndexOutOfRangeException>().Handle<SqlException>(),
                 OnRetry = args =>
                 {
-                    Console.WriteLine($"Error ('{args.Outcome.Exception!.Message}'). Retrying (Attempt {args.AttemptNumber + 1} of {databaseSettings.MaxRetries})...");
-
+                    //Console.WriteLine($"Error ('{args.Outcome.Exception!.Message}'). Retrying (Attempt {args.AttemptNumber + 1} of {databaseSettings.MaxRetries})...");
                     return default;
                 }
             });

@@ -3,6 +3,7 @@ using System.Text;
 using ChatGptNet;
 using DatabaseGpt.DataAccessLayer;
 using DatabaseGpt.Exceptions;
+using DatabaseGpt.Models;
 using DatabaseGpt.Settings;
 using Microsoft.Extensions.Options;
 using Polly;
@@ -50,7 +51,8 @@ internal class DatabaseGptClient : IDatabaseGptClient
                 You must answer the following question, '{question}', using a T-SQL query. Take into account also the previous messages.
                 From the comma separated list of tables available in the database, select those tables that might be useful in the generated T-SQL query.
                 The selected tables should be returned in a comma separated list. Your response should just contain the comma separated list of selected tables.
-                If there are no tables that might be useful, then return just the string 'NONE'.
+                If there are no tables that might be useful, return only the string 'NONE', without any other words. You shouldn't never explain the reason why you haven't found any table.
+                If the question is unclear or you don't understand the question, or you need a clarification, then return only the string 'NONE', without any other words. 
                 """;
 
             if (options?.OnStarting is not null)
@@ -67,10 +69,10 @@ internal class DatabaseGptClient : IDatabaseGptClient
                 throw new NoTableFoundException($"I'm sorry, but there's no available information in the provided tables that can be useful for the question '{question}'.");
             }
 
-            var tables = candidateTables.Split(',', StringSplitOptions.RemoveEmptyEntries);
+            var tables = candidateTables.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
             if (options?.OnCandidateTablesFound is not null)
             {
-                await options.OnCandidateTablesFound.Invoke(tables, serviceProvider);
+                await options.OnCandidateTablesFound.Invoke(new(sessionId, question, tables), serviceProvider);
             }
 
             var createTableScripts = await GetCreateTablesScriptAsync(tables, databaseSettings.ExcludedColumns);
@@ -93,7 +95,7 @@ internal class DatabaseGptClient : IDatabaseGptClient
 
             if (options?.OnQueryGenerated is not null)
             {
-                await options.OnQueryGenerated.Invoke(sql, serviceProvider);
+                await options.OnQueryGenerated.Invoke(new(sessionId, question, tables, sql), serviceProvider);
             }
 
             var reader = await ExecuteQueryAsync(sql);
