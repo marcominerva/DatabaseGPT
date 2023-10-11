@@ -1,9 +1,9 @@
-﻿using ConsoleTables;
-using DatabaseGpt;
+﻿using DatabaseGpt;
 using DatabaseGpt.Exceptions;
 using DatabaseGpt.Extensions;
 using DatabaseGpt.Settings;
 using Microsoft.Extensions.Options;
+using Spectre.Console;
 
 namespace DatabaseGptConsole;
 
@@ -20,88 +20,99 @@ internal class Application
 
     public async Task ExecuteAsync()
     {
-        var conversationId = Guid.NewGuid();
+        AnsiConsole.Write(new FigletText("DatabaseGPT").LeftJustified());
 
-        Console.WriteLine($"""
+        AnsiConsole.WriteLine($"""
             The following rules will be applied:
             {databaseSettings.SystemMessage}
             """);
 
-        Console.WriteLine();
+        AnsiConsole.WriteLine();
 
         var options = new NaturalLanguageQueryOptions
         {
             OnStarting = (_) =>
             {
-                Console.WriteLine("I'm thinking...");
+                AnsiConsole.Write("I'm thinking...");
 
                 return default;
             },
             OnCandidateTablesFound = (tables, _) =>
             {
-                Console.WriteLine();
-                Console.WriteLine($"I think the following tables might be useful: {string.Join(", ", tables)}.");
+                AnsiConsole.WriteLine();
+                AnsiConsole.WriteLine();
+
+                AnsiConsole.Write($"I think the following tables might be useful: {string.Join(", ", tables)}.");
 
                 return default;
             },
             OnQueryGenerated = (sql, _) =>
             {
-                Console.WriteLine();
-                Console.WriteLine("The query to answer the question should be the following:");
-                Console.WriteLine(sql);
-                Console.WriteLine();
+                AnsiConsole.WriteLine();
+                AnsiConsole.WriteLine();
+
+                AnsiConsole.WriteLine("The query to answer the question should be the following:");
+
+                AnsiConsole.WriteLine(sql);
+                AnsiConsole.WriteLine();
 
                 return default;
             }
         };
 
+        var conversationId = Guid.NewGuid();
         string? question = null;
+
         do
         {
             try
             {
-                Console.Write("Ask me anything: ");
+                AnsiConsole.Markup("Ask me anything: ");
                 question = Console.ReadLine();
 
                 if (!string.IsNullOrWhiteSpace(question))
                 {
                     using var reader = await databaseGptClient.ExecuteNaturalLanguageQueryAsync(conversationId, question, options);
 
-                    var table = new ConsoleTable(reader.GetColumnNames().ToArray());
-                    table.Options.NumberAlignment = Alignment.Right;
-                    table.Options.EnableCount = false;
+                    var table = new Table();
+                    table.AddColumns(reader.GetColumnNames().ToArray());
 
                     while (reader.Read())
                     {
-                        var values = new List<string>();
+                        var values = new List<Markup>();
                         for (var i = 0; i < reader.FieldCount; i++)
                         {
-                            values.Add(reader[i]?.ToString() ?? string.Empty);
+                            var value = new Markup(reader[i]?.ToString() ?? string.Empty);
+
+                            var type = reader.GetFieldType(i);
+                            if (type != typeof(string))
+                            {
+                                value.RightJustified();
+                            }
+
+                            values.Add(value);
                         }
 
                         table.AddRow(values.ToArray());
                     }
 
-                    table.Write();
+                    AnsiConsole.Write(table);
                 }
             }
             catch (NoTableFoundException)
             {
-                Console.WriteLine();
-                Console.WriteLine($"I'm sorry, but there's no available information in the provided tables that can be useful for the question '{question}'.");
+                AnsiConsole.WriteLine();
+                AnsiConsole.Markup($"I'm sorry, but there's no available information in the provided tables that can be useful for the question [green]{question}[/].");
             }
             catch (Exception ex)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-
-                Console.WriteLine(ex.Message);
-
-                Console.ResetColor();
+                AnsiConsole.WriteException(ex,
+                    ExceptionFormats.ShortenPaths | ExceptionFormats.ShortenTypes | ExceptionFormats.ShortenMethods | ExceptionFormats.ShowLinks);
             }
             finally
             {
-                Console.WriteLine();
-                Console.WriteLine();
+                AnsiConsole.WriteLine();
+                AnsiConsole.WriteLine();
             }
         } while (!string.IsNullOrWhiteSpace(question));
     }
