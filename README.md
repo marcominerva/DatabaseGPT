@@ -12,7 +12,7 @@ Thanks to [Adam Buckley](https://github.com/happyadam73/tsql-chatgpt) for the [o
 
 ### Usage
 
-The [DatabaseGptConsole](https://github.com/marcominerva/DatabaseGPT/tree/master/src/DatabaseGptConsole) project is a .NET console application that can be used to test the library. It requires .NET 7.0 SDK or later. If you just want to run the application, you can safely download the binaries from the [Releases section](https://github.com/marcominerva/DatabaseGPT/releases/tag/v1.0).
+The [DatabaseGptConsole](https://github.com/marcominerva/DatabaseGPT/tree/master/src/DatabaseGptConsole) project is a .NET console application that can be used to test the library. It requires .NET 7.0 SDK or later. If you just want to run the application, you can safely download the binaries from the [Releases section](https://github.com/marcominerva/DatabaseGPT/releases/tag/v1.1).
 
 You need to set the required values in the [appsettings.json](https://github.com/marcominerva/DatabaseGPT/blob/master/src/DatabaseGptConsole/appsettings.json) file:
 
