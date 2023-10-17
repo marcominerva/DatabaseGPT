@@ -33,7 +33,7 @@ internal class DatabaseGptClient : IDatabaseGptClient
         var conversationExists = await chatGptClient.ConversationExistsAsync(sessionId, cancellationToken);
         if (!conversationExists)
         {
-            var tables = await GetTablesAsync(databaseSettings.ExcludedTables);
+            var tables = await GetTablesAsync();
 
             var systemMessage = $"""
                 You are an assistant that answers questions using the information stored in a SQL Server database.
@@ -114,10 +114,20 @@ internal class DatabaseGptClient : IDatabaseGptClient
         return reader;
     }
 
-    private async Task<IEnumerable<string>> GetTablesAsync(IEnumerable<string> excludedTables)
+    private async Task<IEnumerable<string>> GetTablesAsync()
     {
         var tables = await sqlContext.GetDataAsync<string>("SELECT TABLE_SCHEMA + '.' + TABLE_NAME AS Tables FROM INFORMATION_SCHEMA.TABLES;");
-        return tables.Where(t => !excludedTables.Contains(t));
+
+        if (databaseSettings.IncludedTables?.Any() ?? false)
+        {
+            tables = tables.Where(t => databaseSettings.IncludedTables.Contains(t, StringComparer.InvariantCultureIgnoreCase));
+        }
+        else if (databaseSettings.ExcludedTables?.Any() ?? false)
+        {
+            tables = tables.Where(t => !databaseSettings.ExcludedTables.Contains(t, StringComparer.InvariantCultureIgnoreCase));
+        }
+
+        return tables;
     }
 
     private async Task<string> GetCreateTablesScriptAsync(IEnumerable<string> tables, IEnumerable<string> excludedColumns)

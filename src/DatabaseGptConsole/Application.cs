@@ -23,10 +23,13 @@ internal class Application
     {
         AnsiConsole.Write(new FigletText("DatabaseGPT").LeftJustified());
 
-        AnsiConsole.WriteLine($"""
-            The following rules will be applied:
-            {databaseSettings.SystemMessage}
-            """);
+        if (!string.IsNullOrWhiteSpace(databaseSettings.SystemMessage))
+        {
+            AnsiConsole.WriteLine($"""
+                The following rules will be applied:
+                {databaseSettings.SystemMessage}
+                """);
+        }
 
         AnsiConsole.WriteLine();
 
