@@ -7,9 +7,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="ChatGptNet" Version="2.5.4" />
+        <PackageReference Include="ChatGptNet" Version="2.6.3" />
         <PackageReference Include="ConsoleTables" Version="2.5.0" />
-        <PackageReference Include="Dapper" Version="2.1.4" />
+        <PackageReference Include="Dapper" Version="2.1.11" />
         <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.1" />
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.1" />
         <PackageReference Include="Polly.Extensions" Version="8.0.0" />
