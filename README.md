@@ -38,7 +38,7 @@ You need to set the required values in the [appsettings.json](https://github.com
 For more information about how to configure the ChatGPT integration, refer to the documentation of [ChatGptNet](https://github.com/marcominerva/ChatGptNet).
 
 > **Note**
-If possible, use GPT-4 models. Current experiments demonstrates that they are more accurate than GPT-3 models when generating queries.
+If possible, use GPT-4 models. Current experiments demonstrate that they are more accurate than GPT-3 models when generating queries.
 
 ### Configuration
 
