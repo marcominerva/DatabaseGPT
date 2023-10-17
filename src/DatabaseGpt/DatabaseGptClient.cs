@@ -33,11 +33,12 @@ internal class DatabaseGptClient : IDatabaseGptClient
         var conversationExists = await chatGptClient.ConversationExistsAsync(sessionId, cancellationToken);
         if (!conversationExists)
         {
-            var tables = await GetTablesAsync(databaseSettings.ExcludedTables);
+            var tables = await GetTablesAsync();
 
             var systemMessage = $"""
                 You are an assistant that answers questions using the information stored in a SQL Server database.
                 Your answers can only reference one or more of the following tables: '{string.Join(',', tables)}'.
+                You can create only SELECT queries. Never create INSERT, UPDATE nor DELETE command.
                 When you create a T-SQL query, consider the following information:
                 {databaseSettings.SystemMessage}
                 """;
@@ -66,7 +67,7 @@ internal class DatabaseGptClient : IDatabaseGptClient
 
             if (candidateTables == "NONE")
             {
-                throw new NoTableFoundException($"I'm sorry, but there's no available information in the provided tables that can be useful for the question '{question}'.");
+                throw new NoTableFoundException($"No available information in the provided tables can be useful for the question '{question}'.");
             }
 
             var tables = candidateTables.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
@@ -86,11 +87,19 @@ internal class DatabaseGptClient : IDatabaseGptClient
                 CREATE TABLE Table2 (Column3 VARCHAR(255), Column4 VARCHAR(255))
                 Then you should only reference Tables Table1 and Table2 and the query should only reference columns Column1, Column2, Column3 and Column4.
                 Your response should just contain the T-SQL query, no other information is required. For example, never explain the meaning of the query nor explain how to use the query.
+                You can create only SELECT queries. Never create INSERT, UPDATE nor DELETE commands.
+                If the question of the user requires an INSERT, UPDATE or DELETE command, then return only the string 'NONE', without any other words. You shouldn't never explain the reason why you haven't created the query.
                 """;
 
             response = await chatGptClient.AskAsync(sessionId, request, cancellationToken: cancellationToken);
 
             var sql = response.GetContent()!;
+
+            if (sql == "NONE")
+            {
+                throw new InvalidSqlException($"The question '{question}' requires an INSERT, UPDATE or DELETE command, that isn't supported.");
+            }
+
             sql = sql[sql.IndexOf("SELECT")..].Replace("```", string.Empty);
 
             if (options?.OnQueryGenerated is not null)
@@ -105,10 +114,20 @@ internal class DatabaseGptClient : IDatabaseGptClient
         return reader;
     }
 
-    private async Task<IEnumerable<string>> GetTablesAsync(IEnumerable<string> excludedTables)
+    private async Task<IEnumerable<string>> GetTablesAsync()
     {
         var tables = await sqlContext.GetDataAsync<string>("SELECT TABLE_SCHEMA + '.' + TABLE_NAME AS Tables FROM INFORMATION_SCHEMA.TABLES;");
-        return tables.Where(t => !excludedTables.Contains(t));
+
+        if (databaseSettings.IncludedTables?.Any() ?? false)
+        {
+            tables = tables.Where(t => databaseSettings.IncludedTables.Contains(t, StringComparer.InvariantCultureIgnoreCase));
+        }
+        else if (databaseSettings.ExcludedTables?.Any() ?? false)
+        {
+            tables = tables.Where(t => !databaseSettings.ExcludedTables.Contains(t, StringComparer.InvariantCultureIgnoreCase));
+        }
+
+        return tables;
     }
 
     private async Task<string> GetCreateTablesScriptAsync(IEnumerable<string> tables, IEnumerable<string> excludedColumns)

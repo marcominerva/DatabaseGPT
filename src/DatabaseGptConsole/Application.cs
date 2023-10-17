@@ -23,10 +23,13 @@ internal class Application
     {
         AnsiConsole.Write(new FigletText("DatabaseGPT").LeftJustified());
 
-        AnsiConsole.WriteLine($"""
-            The following rules will be applied:
-            {databaseSettings.SystemMessage}
-            """);
+        if (!string.IsNullOrWhiteSpace(databaseSettings.SystemMessage))
+        {
+            AnsiConsole.WriteLine($"""
+                The following rules will be applied:
+                {databaseSettings.SystemMessage}
+                """);
+        }
 
         AnsiConsole.WriteLine();
 
@@ -43,7 +46,7 @@ internal class Application
                 AnsiConsole.WriteLine();
                 AnsiConsole.WriteLine();
 
-                AnsiConsole.Write($"I think the following tables might be useful: {string.Join(", ", args.Tables)}.");
+                AnsiConsole.WriteLine($"I think the following tables might be useful: {string.Join(", ", args.Tables)}.");
 
                 return default;
             },
@@ -105,6 +108,11 @@ internal class Application
             {
                 AnsiConsole.WriteLine();
                 AnsiConsole.Markup($"I'm sorry, but there's no available information in the provided tables that can be useful for the question [green]{question}[/].");
+            }
+            catch (InvalidSqlException)
+            {
+                AnsiConsole.WriteLine();
+                AnsiConsole.Markup($"I'm sorry, but the question [green]{question}[/] requires an INSERT, UPDATE or DELETE query, that isn't supported.");
             }
             catch (Exception ex)
             {
