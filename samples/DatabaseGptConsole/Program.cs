@@ -28,4 +28,5 @@ static void ConfigureServices(HostBuilderContext context, IServiceCollection ser
 {
     services.AddSingleton<Application>();
     services.AddDatabaseGpt(context.Configuration);
+    services.AddNpgsqlDatabaseGptProvider(context.Configuration["ConnectionStrings:SqlConnection"]);
 }

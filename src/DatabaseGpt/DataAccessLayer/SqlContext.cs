@@ -1,182 +1,182 @@
-﻿using System.Data;
-using Dapper;
-using DatabaseGpt.DataAccessLayer.TypeHandlers;
-using Microsoft.Data.SqlClient;
+﻿//using System.Data;
+//using DatabaseGpt.Abstractions;
+//using DatabaseGpt.DataAccessLayer.TypeHandlers;
 
-namespace DatabaseGpt.DataAccessLayer;
+//namespace DatabaseGpt.DataAccessLayer;
 
-internal class SqlContext : ISqlContext
-{
-    private bool disposedValue;
+//internal class SqlContext : ISqlContext
+//{
+//    private bool disposedValue;
 
-    private IDbConnection connection;
-    private IDbConnection Connection
-    {
-        get
-        {
-            if (connection.State == ConnectionState.Closed)
-            {
-                connection.Open();
-            }
+//    private IDbConnection connection;
+//    private readonly IDatabaseGptProvider provider;
 
-            return connection;
-        }
-    }
+//    private IDbConnection Connection
+//    {
+//        get
+//        {
+//            if (connection.State == ConnectionState.Closed)
+//            {
+//                connection.Open();
+//            }
 
-    static SqlContext()
-    {
-        SqlMapper.AddTypeHandler(new DateOnlyTypeHandler());
-        SqlMapper.AddTypeHandler(new TimeOnlyTypeHandler());
-    }
+//            return connection;
+//        }
+//    }
 
-    public SqlContext(SqlContextOptions options)
-    {
-        connection = new SqlConnection(options.ConnectionString);
-    }
+//    static SqlContext()
+//    {
+//    }
 
-    public Task<IDataReader> GetDataReaderAsync(string sql, object? param = null, IDbTransaction? transaction = null, CommandType? commandType = null)
-    {
-        ThrowIfDisposed();
+//    public SqlContext(IDatabaseGptProvider provider, SqlContextOptions options)
+//    {
+//        this.provider = provider;
+//        connection = provider.CreateConnection();
+//    }
 
-        return Connection.ExecuteReaderAsync(sql, param, transaction, commandType: commandType);
-    }
+//    public Task<IDataReader> GetDataReaderAsync(string sql, object? param = null, IDbTransaction? transaction = null, CommandType? commandType = null)
+//    {
+//        ThrowIfDisposed();
 
-    public Task<IEnumerable<T>> GetDataAsync<T>(string sql, object? param = null, IDbTransaction? transaction = null, CommandType? commandType = null)
-        where T : class
-    {
-        ThrowIfDisposed();
+//        return Connection.ExecuteReaderAsync(sql, param, transaction, commandType: commandType);
+//    }
 
-        return Connection.QueryAsync<T>(sql, param, transaction, commandType: commandType);
-    }
+//    public Task<IEnumerable<T>> GetDataAsync<T>(string sql, object? param = null, IDbTransaction? transaction = null, CommandType? commandType = null)
+//        where T : class
+//    {
+//        ThrowIfDisposed();
 
-    public Task<IEnumerable<TReturn>> GetDataAsync<TFirst, TSecond, TReturn>(string sql, Func<TFirst, TSecond, TReturn> map, object? param = null, IDbTransaction? transaction = null, CommandType? commandType = null, string splitOn = "Id")
-        where TFirst : class
-        where TSecond : class
-        where TReturn : class
-    {
-        ThrowIfDisposed();
+//        return Connection.QueryAsync<T>(sql, param, transaction, commandType: commandType);
+//    }
 
-        return Connection.QueryAsync(sql, map, param, transaction, splitOn: splitOn, commandType: commandType);
-    }
+//    public Task<IEnumerable<TReturn>> GetDataAsync<TFirst, TSecond, TReturn>(string sql, Func<TFirst, TSecond, TReturn> map, object? param = null, IDbTransaction? transaction = null, CommandType? commandType = null, string splitOn = "Id")
+//        where TFirst : class
+//        where TSecond : class
+//        where TReturn : class
+//    {
+//        ThrowIfDisposed();
 
-    public Task<IEnumerable<TReturn>> GetDataAsync<TFirst, TSecond, TThrid, TReturn>(string sql, Func<TFirst, TSecond, TThrid, TReturn> map, object? param = null, IDbTransaction? transaction = null, CommandType? commandType = null, string splitOn = "Id")
-        where TFirst : class
-        where TSecond : class
-        where TThrid : class
-        where TReturn : class
-    {
-        ThrowIfDisposed();
+//        return Connection.QueryAsync(sql, map, param, transaction, splitOn: splitOn, commandType: commandType);
+//    }
 
-        return Connection.QueryAsync(sql, map, param, transaction, splitOn: splitOn, commandType: commandType);
-    }
+//    public Task<IEnumerable<TReturn>> GetDataAsync<TFirst, TSecond, TThrid, TReturn>(string sql, Func<TFirst, TSecond, TThrid, TReturn> map, object? param = null, IDbTransaction? transaction = null, CommandType? commandType = null, string splitOn = "Id")
+//        where TFirst : class
+//        where TSecond : class
+//        where TThrid : class
+//        where TReturn : class
+//    {
+//        ThrowIfDisposed();
 
-    public Task<IEnumerable<TReturn>> GetDataAsync<TFirst, TSecond, TThrid, TFourth, TReturn>(string sql, Func<TFirst, TSecond, TThrid, TFourth, TReturn> map, object? param = null, IDbTransaction? transaction = null, CommandType? commandType = null, string splitOn = "Id")
-        where TFirst : class
-        where TSecond : class
-        where TThrid : class
-        where TFourth : class
-        where TReturn : class
-    {
-        ThrowIfDisposed();
+//        return Connection.QueryAsync(sql, map, param, transaction, splitOn: splitOn, commandType: commandType);
+//    }
 
-        return Connection.QueryAsync(sql, map, param, transaction, splitOn: splitOn, commandType: commandType);
-    }
+//    public Task<IEnumerable<TReturn>> GetDataAsync<TFirst, TSecond, TThrid, TFourth, TReturn>(string sql, Func<TFirst, TSecond, TThrid, TFourth, TReturn> map, object? param = null, IDbTransaction? transaction = null, CommandType? commandType = null, string splitOn = "Id")
+//        where TFirst : class
+//        where TSecond : class
+//        where TThrid : class
+//        where TFourth : class
+//        where TReturn : class
+//    {
+//        ThrowIfDisposed();
 
-    public Task<T?> GetObjectAsync<T>(string sql, object? param = null, IDbTransaction? transaction = null, CommandType? commandType = null)
-        where T : class
-    {
-        ThrowIfDisposed();
+//        return Connection.QueryAsync(sql, map, param, transaction, splitOn: splitOn, commandType: commandType);
+//    }
 
-        return Connection.QueryFirstOrDefaultAsync<T>(sql, param, transaction, commandType: commandType);
-    }
+//    public Task<T?> GetObjectAsync<T>(string sql, object? param = null, IDbTransaction? transaction = null, CommandType? commandType = null)
+//        where T : class
+//    {
+//        ThrowIfDisposed();
 
-    public async Task<TReturn?> GetObjectAsync<TFirst, TSecond, TReturn>(string sql, Func<TFirst, TSecond, TReturn> map, object? param = null, IDbTransaction? transaction = null, CommandType? commandType = null, string splitOn = "Id")
-        where TFirst : class
-        where TSecond : class
-        where TReturn : class
-    {
-        ThrowIfDisposed();
+//        return Connection.QueryFirstOrDefaultAsync<T>(sql, param, transaction, commandType: commandType);
+//    }
 
-        var result = await Connection.QueryAsync(sql, map, param, transaction, splitOn: splitOn, commandType: commandType).ConfigureAwait(false);
-        return result.FirstOrDefault();
-    }
+//    public async Task<TReturn?> GetObjectAsync<TFirst, TSecond, TReturn>(string sql, Func<TFirst, TSecond, TReturn> map, object? param = null, IDbTransaction? transaction = null, CommandType? commandType = null, string splitOn = "Id")
+//        where TFirst : class
+//        where TSecond : class
+//        where TReturn : class
+//    {
+//        ThrowIfDisposed();
 
-    public async Task<TReturn?> GetObjectAsync<TFirst, TSecond, TThird, TReturn>(string sql, Func<TFirst, TSecond, TThird, TReturn> map, object? param = null, IDbTransaction? transaction = null, CommandType? commandType = null, string splitOn = "Id")
-        where TFirst : class
-        where TSecond : class
-        where TThird : class
-        where TReturn : class
-    {
-        ThrowIfDisposed();
+//        var result = await Connection.QueryAsync(sql, map, param, transaction, splitOn: splitOn, commandType: commandType).ConfigureAwait(false);
+//        return result.FirstOrDefault();
+//    }
 
-        var result = await Connection.QueryAsync(sql, map, param, transaction, splitOn: splitOn, commandType: commandType).ConfigureAwait(false);
-        return result.FirstOrDefault();
-    }
+//    public async Task<TReturn?> GetObjectAsync<TFirst, TSecond, TThird, TReturn>(string sql, Func<TFirst, TSecond, TThird, TReturn> map, object? param = null, IDbTransaction? transaction = null, CommandType? commandType = null, string splitOn = "Id")
+//        where TFirst : class
+//        where TSecond : class
+//        where TThird : class
+//        where TReturn : class
+//    {
+//        ThrowIfDisposed();
 
-    public async Task<TReturn?> GetObjectAsync<TFirst, TSecond, TThird, TFourth, TReturn>(string sql, Func<TFirst, TSecond, TThird, TFourth, TReturn> map, object? param = null, IDbTransaction? transaction = null, CommandType? commandType = null, string splitOn = "Id")
-        where TFirst : class
-        where TSecond : class
-        where TThird : class
-        where TFourth : class
-        where TReturn : class
-    {
-        ThrowIfDisposed();
+//        var result = await Connection.QueryAsync(sql, map, param, transaction, splitOn: splitOn, commandType: commandType).ConfigureAwait(false);
+//        return result.FirstOrDefault();
+//    }
 
-        var result = await Connection.QueryAsync(sql, map, param, transaction, splitOn: splitOn, commandType: commandType).ConfigureAwait(false);
-        return result.FirstOrDefault();
-    }
+//    public async Task<TReturn?> GetObjectAsync<TFirst, TSecond, TThird, TFourth, TReturn>(string sql, Func<TFirst, TSecond, TThird, TFourth, TReturn> map, object? param = null, IDbTransaction? transaction = null, CommandType? commandType = null, string splitOn = "Id")
+//        where TFirst : class
+//        where TSecond : class
+//        where TThird : class
+//        where TFourth : class
+//        where TReturn : class
+//    {
+//        ThrowIfDisposed();
 
-    public Task<T?> GetSingleValueAsync<T>(string sql, object? param = null, IDbTransaction? transaction = null, CommandType? commandType = null)
-    {
-        ThrowIfDisposed();
+//        var result = await Connection.QueryAsync(sql, map, param, transaction, splitOn: splitOn, commandType: commandType).ConfigureAwait(false);
+//        return result.FirstOrDefault();
+//    }
 
-        return Connection.ExecuteScalarAsync<T>(sql, param, transaction, commandType: commandType);
-    }
+//    public Task<T?> GetSingleValueAsync<T>(string sql, object? param = null, IDbTransaction? transaction = null, CommandType? commandType = null)
+//    {
+//        ThrowIfDisposed();
 
-    public Task<int> ExecuteAsync(string sql, object? param = null, IDbTransaction? transaction = null, CommandType? commandType = null)
-    {
-        ThrowIfDisposed();
+//        return Connection.ExecuteScalarAsync<T>(sql, param, transaction, commandType: commandType);
+//    }
 
-        return Connection.ExecuteAsync(sql, param, transaction, commandType: commandType);
-    }
+//    public Task<int> ExecuteAsync(string sql, object? param = null, IDbTransaction? transaction = null, CommandType? commandType = null)
+//    {
+//        ThrowIfDisposed();
 
-    public IDbTransaction BeginTransaction(IsolationLevel isolationLevel = IsolationLevel.Unspecified)
-    {
-        ThrowIfDisposed();
+//        return Connection.ExecuteAsync(sql, param, transaction, commandType: commandType);
+//    }
 
-        return Connection.BeginTransaction(isolationLevel);
-    }
+//    public IDbTransaction BeginTransaction(IsolationLevel isolationLevel = IsolationLevel.Unspecified)
+//    {
+//        ThrowIfDisposed();
 
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!disposedValue)
-        {
-            if (disposing)
-            {
-                if (connection?.State == ConnectionState.Open)
-                {
-                    connection.Close();
-                }
+//        return Connection.BeginTransaction(isolationLevel);
+//    }
 
-                connection?.Dispose();
-                connection = null!;
-            }
+//    protected virtual void Dispose(bool disposing)
+//    {
+//        if (!disposedValue)
+//        {
+//            if (disposing)
+//            {
+//                if (connection?.State == ConnectionState.Open)
+//                {
+//                    connection.Close();
+//                }
 
-            disposedValue = true;
-        }
-    }
+//                connection?.Dispose();
+//                connection = null!;
+//            }
 
-    public void Dispose()
-    {
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
-    }
+//            disposedValue = true;
+//        }
+//    }
 
-    private void ThrowIfDisposed()
-    {
-        if (disposedValue)
-        {
-            throw new ObjectDisposedException(GetType().FullName);
-        }
-    }
-}
+//    public void Dispose()
+//    {
+//        Dispose(disposing: true);
+//        GC.SuppressFinalize(this);
+//    }
+
+//    private void ThrowIfDisposed()
+//    {
+//        if (disposedValue)
+//        {
+//            throw new ObjectDisposedException(GetType().FullName);
+//        }
+//    }
+//}

@@ -1,7 +1,7 @@
-﻿namespace DatabaseGpt.DataAccessLayer;
+﻿//namespace DatabaseGpt.DataAccessLayer;
 
-public class SqlContextOptions
-{
-    public string ConnectionString { get; set; } = null!;
-}
+//public class SqlContextOptions
+//{
+//    public string ConnectionString { get; set; } = null!;
+//}
 
