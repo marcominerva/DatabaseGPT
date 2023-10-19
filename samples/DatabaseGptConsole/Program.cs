@@ -28,5 +28,10 @@ static void ConfigureServices(HostBuilderContext context, IServiceCollection ser
 {
     services.AddSingleton<Application>();
     services.AddDatabaseGpt(context.Configuration);
-    services.AddNpgsqlDatabaseGptProvider(context.Configuration["ConnectionStrings:SqlConnection"]);
+
+    // For using Postgres
+    // services.AddNpgsqlDatabaseGptProvider(context.Configuration["ConnectionStrings:SqlConnection"]);
+
+    // For using SQL Server
+    services.AddSqlServerDatabaseGptProvider(context.Configuration["ConnectionStrings:SqlConnection"]);
 }
