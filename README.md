@@ -12,7 +12,7 @@ Thanks to [Adam Buckley](https://github.com/happyadam73/tsql-chatgpt) for the [o
 
 ### Usage
 
-The [DatabaseGptConsole](https://github.com/marcominerva/DatabaseGPT/tree/master/src/DatabaseGptConsole) project is a .NET console application that can be used to test the library. It requires .NET 7.0 SDK or later. If you just want to run the application, you can safely download the binaries from the [Releases section](https://github.com/marcominerva/DatabaseGPT/releases/tag/v1.1).
+The [DatabaseGptConsole](https://github.com/marcominerva/DatabaseGPT/tree/master/src/DatabaseGptConsole) project is a .NET console application that can be used to test the library. It requires .NET 7.0 SDK or later. If you just want to run the application, you can safely download the binaries from the [Releases section](https://github.com/marcominerva/DatabaseGPT/releases/tag/v1.1.2).
 
 You need to set the required values in the [appsettings.json](https://github.com/marcominerva/DatabaseGPT/blob/master/src/DatabaseGptConsole/appsettings.json) file:
 
@@ -36,6 +36,9 @@ You need to set the required values in the [appsettings.json](https://github.com
 ```
 
 For more information about how to configure the ChatGPT integration, refer to the documentation of [ChatGptNet](https://github.com/marcominerva/ChatGptNet).
+
+> **Note**
+If possible, use GPT-4 models. Current experiments demonstrate that they are more accurate than GPT-3 models when generating queries.
 
 ### Configuration
 
@@ -72,12 +75,20 @@ Giving this schema, the model will be able to infer the following information, f
 - The `SupplierId` column in the `Products` table is a foreign key to the `Id` column in the `Suppliers` table.
 - The `CategoryId` column in the `Products` table is a foreign key to the `Id` column in the `Categories` table.
 
-If in the schema there are tables and columns and you never want to be used, you can exclude these tables and columns from the query generation process by adding them to the `ExcludedTables` and `ExcludedColumns` arrays in the [appsettings.json](https://github.com/marcominerva/DatabaseGPT/blob/master/src/DatabaseGptConsole/appsettings.json) file. For example:
+If in the schema there are tables and columns and you never want to be used, you can exclude them from the query generation process by adding them to the `ExcludedTables` and `ExcludedColumns` arrays in the [appsettings.json](https://github.com/marcominerva/DatabaseGPT/blob/master/src/DatabaseGptConsole/appsettings.json#L17-L18) file. For example:
 
 ```
 "DatabaseSettings": {
     "ExcludedTables": [ "dbo.CheckView" ],       
     "ExcludedColumns": [ "Timestamp" ]         // Exclude the Timestamp column from all tables
+}
+```
+
+On the other hand, if you want to use only a particular set of tables, you can add them to the `IncludedTables` array in the [appsettings.json](https://github.com/marcominerva/DatabaseGPT/blob/master/src/DatabaseGptConsole/appsettings.json#L16) file. For example:
+
+```json
+"DatabaseSettings": {
+    "IncludedTables": [ "Production.Product", "Sales.SalesOrderHeader" "Sales.SalesOrderDetail" ]
 }
 ```
 
@@ -101,6 +112,18 @@ In this case, the `Status` column contains an integer value that represents the 
 ```
 
 You can add as many indications as you need. The library will use this information to generate the query.
+
+#### Retry strategy
+
+As we know, GPT models are not perfect. Sometimes, the generated query is not valid. In this case, the library will retry to generate the query, using a different approach. The number of retries is configured in the [appsettings.json](https://github.com/marcominerva/DatabaseGPT/blob/master/src/DatabaseGptConsole/appsettings.json#L19) file:
+
+```json
+"DatabaseSettings": {
+    "MaxRetries": 3
+}
+```
+
+The retry strategy is handled using [Polly](https://github.com/App-vNext/Polly).
 
 ## Contribute
 

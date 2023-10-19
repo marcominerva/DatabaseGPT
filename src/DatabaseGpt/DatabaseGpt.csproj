@@ -7,7 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="ChatGptNet" Version="2.5.4" />
+        <PackageReference Include="ChatGptNet" Version="2.6.3" />
         <PackageReference Include="ConsoleTables" Version="2.5.0" />
         <PackageReference Include="Polly.Extensions" Version="8.0.0" />
     </ItemGroup>
