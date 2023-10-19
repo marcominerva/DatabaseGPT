@@ -42,7 +42,7 @@ public class NpgsqlDatabaseGptProvider : IDatabaseGptProvider, IDisposable
         }
         catch (NpgsqlException ex)
         {
-            throw new DatabaseGptException("Something went wrong", ex);
+            throw new DatabaseGptException("An error occured. Se inner exception for details", ex);
         }
     }
     public async Task<string> GetCreateTablesScriptAsync(IEnumerable<string> tables, IEnumerable<string> excludedColumns)

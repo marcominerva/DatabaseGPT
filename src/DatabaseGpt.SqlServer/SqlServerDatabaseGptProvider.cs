@@ -38,7 +38,7 @@ public class SqlServerDatabaseGptProvider : IDatabaseGptProvider, IDisposable
         }
         catch (SqlException ex)
         {
-            throw new DatabaseGptException("Something went wrong", ex);
+            throw new DatabaseGptException("An error occured. Se inner exception for details", ex);
         }
     }
     public async Task<string> GetCreateTablesScriptAsync(IEnumerable<string> tables, IEnumerable<string> excludedColumns)
