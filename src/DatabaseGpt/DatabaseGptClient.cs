@@ -16,16 +16,15 @@ internal class DatabaseGptClient : IDatabaseGptClient
     private readonly IDatabaseGptProvider provider;
     private readonly IServiceProvider serviceProvider;
     private readonly ResiliencePipeline pipeline;
-    private readonly DatabaseSettings databaseSettings;
+    private readonly DatabaseGptSettings databaseSettings;
 
-    public DatabaseGptClient(IChatGptClient chatGptClient, IDatabaseGptProvider provider
-        , ResiliencePipelineProvider<string> pipelineProvider, IServiceProvider serviceProvider
-        , IOptions<DatabaseSettings> databaseSettingsOptions)
+    public DatabaseGptClient(IChatGptClient chatGptClient, ResiliencePipelineProvider<string> pipelineProvider
+        , IServiceProvider serviceProvider, DatabaseGptSettings databaseSettingsOptions)
     {
         this.chatGptClient = chatGptClient;
-        this.provider = provider;
         this.serviceProvider = serviceProvider;
-        databaseSettings = databaseSettingsOptions.Value;
+        databaseSettings = databaseSettingsOptions;
+        provider = databaseSettings.CreateProvider();
         pipeline = pipelineProvider.GetPipeline(nameof(DatabaseGptClient));
     }
 

@@ -6,9 +6,8 @@ namespace DatabaseGpt;
 
 public static class NpgsqlDatabaseGptExtensions
 {
-    public static void AddNpgsqlDatabaseGptProvider(this IServiceCollection services, string connectionString, ServiceLifetime serviceLifetime = ServiceLifetime.Scoped)
+    public static void UseNpgsql(this IDatabaseGptSettings databaseGptSettings, string connectionString)
     {
-        services.AddSingleton(new NpgsqlDatabaseGptProviderConfiguration { ConnectionString = connectionString });
-        services.Add(new ServiceDescriptor(typeof(IDatabaseGptProvider), typeof(NpgsqlDatabaseGptProvider), serviceLifetime));
+        databaseGptSettings.SetDatabaseGptProviderFactory(() => new NpgsqlDatabaseGptProvider(new() { ConnectionString = connectionString }));
     }
 }

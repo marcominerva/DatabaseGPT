@@ -1,4 +1,5 @@
-﻿using DatabaseGpt;
+﻿using ChatGptNet;
+using DatabaseGpt;
 using DatabaseGptConsole;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,11 +28,15 @@ await application.ExecuteAsync();
 static void ConfigureServices(HostBuilderContext context, IServiceCollection services)
 {
     services.AddSingleton<Application>();
-    services.AddDatabaseGpt(context.Configuration);
+    services.AddDatabaseGpt(database => database
+            .UseConfiguration(context.Configuration)
+            .UseSqlServer(context.Configuration["ConnectionStrings:SqlConnection"]),
+        chatgpt => chatgpt.UseConfiguration(context.Configuration)
+    );
 
     // For using Postgres
     // services.AddNpgsqlDatabaseGptProvider(context.Configuration["ConnectionStrings:SqlConnection"]);
 
     // For using SQL Server
-    services.AddSqlServerDatabaseGptProvider(context.Configuration["ConnectionStrings:SqlConnection"]);
+    // services.AddSqlServerDatabaseGptProvider(context.Configuration["ConnectionStrings:SqlConnection"]);
 }
