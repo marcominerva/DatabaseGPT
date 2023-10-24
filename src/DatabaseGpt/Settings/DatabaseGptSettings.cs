@@ -4,6 +4,8 @@ namespace DatabaseGpt.Settings;
 
 public class DatabaseGptSettings : IDatabaseGptSettings
 {
+    private Func<IDatabaseGptProvider> providerFactory;
+
     public string SystemMessage { get; set; } = "You are an AI assistant that helps people find information.";
 
     public string[] IncludedTables { get; set; } = Array.Empty<string>();
@@ -14,12 +16,10 @@ public class DatabaseGptSettings : IDatabaseGptSettings
 
     public int MaxRetries { get; set; } = 3;
 
-    private Func<IDatabaseGptProvider> providerFactory;
     public void SetDatabaseGptProviderFactory(Func<IDatabaseGptProvider> providerFactory)
     {
         this.providerFactory = providerFactory;
     }
 
     internal IDatabaseGptProvider CreateProvider() => providerFactory();
-
 }

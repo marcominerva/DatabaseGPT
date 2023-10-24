@@ -15,7 +15,7 @@ var host = Host.CreateDefaultBuilder(args)
             var systemMessage = File.ReadAllText("SystemMessage.txt");
             builder.AddInMemoryCollection(new List<KeyValuePair<string, string?>>
             {
-                new KeyValuePair<string, string?>("DatabaseSettings:SystemMessage", systemMessage)
+                new KeyValuePair<string, string?>("DatabaseGptSettings:SystemMessage", systemMessage)
             });
         }
     })
@@ -28,15 +28,16 @@ await application.ExecuteAsync();
 static void ConfigureServices(HostBuilderContext context, IServiceCollection services)
 {
     services.AddSingleton<Application>();
-    services.AddDatabaseGpt(database => database
-            .UseConfiguration(context.Configuration)
-            .UseSqlServer(context.Configuration["ConnectionStrings:SqlConnection"]),
+    services.AddDatabaseGpt(database =>
+        {
+            // For using SQL Server
+            database.UseConfiguration(context.Configuration)
+                    .UseSqlServer(context.Configuration["ConnectionStrings:SqlConnection"]);
+
+            // For using Postgres
+            // database.UseConfiguration(context.Configuration)
+            //         .UseNpgsql(context.Configuration["ConnectionStrings:SqlConnection"]);
+        },
         chatgpt => chatgpt.UseConfiguration(context.Configuration)
     );
-
-    // For using Postgres
-    // services.AddNpgsqlDatabaseGptProvider(context.Configuration["ConnectionStrings:SqlConnection"]);
-
-    // For using SQL Server
-    // services.AddSqlServerDatabaseGptProvider(context.Configuration["ConnectionStrings:SqlConnection"]);
 }

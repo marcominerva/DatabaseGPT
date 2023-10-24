@@ -9,29 +9,37 @@ namespace DatabaseGpt.Npgsql;
 
 public class NpgsqlDatabaseGptProvider : IDatabaseGptProvider, IDisposable
 {
-    private readonly NpgsqlDatabaseGptProviderConfiguration settings;
+    private readonly NpgsqlConnection connection;
     private bool disposedValue;
+
+    public string Name => "Postgres";
+
+    public string Language => "Postgres SQL";
 
     public NpgsqlDatabaseGptProvider(NpgsqlDatabaseGptProviderConfiguration settings)
     {
-        this.settings = settings;
-        this.connection = new NpgsqlConnection(settings.ConnectionString);
+        connection = new NpgsqlConnection(settings.ConnectionString);
         connection.Open();
     }
 
-    private readonly NpgsqlConnection connection;
-
-    public string Name => "Postgres";
-    public string Language => "Postgres SQL";
-
-    public async Task<IEnumerable<string>> GetTablesAsync(IEnumerable<string> excludedTables)
+    public async Task<IEnumerable<string>> GetTablesAsync(IEnumerable<string> includedTables, IEnumerable<string> excludedTables)
     {
         var tables = await connection.QueryAsync<string>("""
             SELECT TABLE_SCHEMA || '.' || TABLE_NAME AS Tables
             FROM INFORMATION_SCHEMA.TABLES
             WHERE TABLE_SCHEMA NOT IN ('pg_catalog', 'information_schema')
             """);
-        return tables.Where(t => !excludedTables.Contains(t));
+
+        if (includedTables?.Any() ?? false)
+        {
+            tables = tables.Where(t => includedTables.Contains(t));
+        }
+        else if (excludedTables?.Any() ?? false)
+        {
+            tables = tables.Where(t => !excludedTables.Contains(t));
+        }
+
+        return tables;
     }
 
     public async Task<IDataReader> ExecuteQueryAsync(string query)
@@ -42,7 +50,7 @@ public class NpgsqlDatabaseGptProvider : IDatabaseGptProvider, IDisposable
         }
         catch (NpgsqlException ex)
         {
-            throw new DatabaseGptException("An error occured. Se inner exception for details", ex);
+            throw new DatabaseGptException("An error occurred while executing the query. See the inner exception for details", ex);
         }
     }
     public async Task<string> GetCreateTablesScriptAsync(IEnumerable<string> tables, IEnumerable<string> excludedColumns)

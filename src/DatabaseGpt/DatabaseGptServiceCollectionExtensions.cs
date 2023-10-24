@@ -10,14 +10,14 @@ namespace DatabaseGpt;
 
 public static class DatabaseGptServiceCollectionExtensions
 {
-    public static IServiceCollection AddDatabaseGpt(this IServiceCollection services, Action<DatabaseGptSettings> buildDatabaseGpt, Action<ChatGptOptionsBuilder> buildChatGpt, ServiceLifetime lifetime = ServiceLifetime.Scoped)
+    public static IServiceCollection AddDatabaseGpt(this IServiceCollection services, Action<DatabaseGptSettings> configureDatabaseGpt, Action<ChatGptOptionsBuilder> configureChatGpt, ServiceLifetime lifetime = ServiceLifetime.Scoped)
     {
         var settings = new DatabaseGptSettings();
-        buildDatabaseGpt(settings);
+        configureDatabaseGpt(settings);
 
         services.AddSingleton(settings);
         services.Add(new ServiceDescriptor(typeof(IDatabaseGptClient), typeof(DatabaseGptClient), lifetime));
-        services.AddChatGpt(buildChatGpt);
+        services.AddChatGpt(configureChatGpt);
         services.AddResiliencePipeline(nameof(DatabaseGptClient), (builder) =>
         {
             builder.AddRetry(new RetryStrategyOptions
@@ -35,42 +35,9 @@ public static class DatabaseGptServiceCollectionExtensions
         return services;
     }
 
-    public static DatabaseGptSettings UseConfiguration(this DatabaseGptSettings settings, IConfiguration configuration, string databaseSettings = "DatabaseSettings")
+    public static DatabaseGptSettings UseConfiguration(this DatabaseGptSettings settings, IConfiguration configuration, string databaseGptSettingsSectionName = "DatabaseGptSettings")
     {
-        configuration.GetSection(databaseSettings).Bind(settings);
+        configuration.GetSection(databaseGptSettingsSectionName).Bind(settings);
         return settings;
     }
-
-    //public static IServiceCollection AddDatabaseGpt(this IServiceCollection services, IConfiguration configuration
-    //    , ServiceLifetime lifetime = ServiceLifetime.Scoped, string connectionStringName = "SqlConnection"
-    //    , string chatGptSectionName = "ChatGPT")
-    //{
-    //    var databaseSettings = ConfigureAndGet<DatabaseGptSettings>("DatabaseSettings");
-
-    //    services.Add(new ServiceDescriptor(typeof(IDatabaseGptClient), typeof(DatabaseGptClient), lifetime));
-    //    services.AddResiliencePipeline(nameof(DatabaseGptClient), (builder) =>
-    //    {
-    //        builder.AddRetry(new RetryStrategyOptions
-    //        {
-    //            MaxRetryAttempts = databaseSettings!.MaxRetries,
-    //            Delay = TimeSpan.Zero,
-    //            ShouldHandle = new PredicateBuilder()
-    //                .Handle<ArgumentOutOfRangeException>()
-    //                .Handle<IndexOutOfRangeException>()
-    //                .Handle<DatabaseGptException>(),
-    //            OnRetry = args => default
-    //        });
-    //    });
-
-    //    return services;
-
-    //    T? ConfigureAndGet<T>(string sectionName) where T : class
-    //    {
-    //        var section = configuration.GetSection(sectionName);
-    //        var settings = section.Get<T>();
-    //        services.Configure<T>(section);
-
-    //        return settings;
-    //    }
-    //}
 }

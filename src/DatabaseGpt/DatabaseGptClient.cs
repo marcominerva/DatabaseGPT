@@ -16,15 +16,15 @@ internal class DatabaseGptClient : IDatabaseGptClient
     private readonly IDatabaseGptProvider provider;
     private readonly IServiceProvider serviceProvider;
     private readonly ResiliencePipeline pipeline;
-    private readonly DatabaseGptSettings databaseSettings;
+    private readonly DatabaseGptSettings databaseGptSettings;
 
     public DatabaseGptClient(IChatGptClient chatGptClient, ResiliencePipelineProvider<string> pipelineProvider
-        , IServiceProvider serviceProvider, DatabaseGptSettings databaseSettingsOptions)
+        , IServiceProvider serviceProvider, DatabaseGptSettings databaseGptSettings)
     {
         this.chatGptClient = chatGptClient;
         this.serviceProvider = serviceProvider;
-        databaseSettings = databaseSettingsOptions;
-        provider = databaseSettings.CreateProvider();
+        this.databaseGptSettings = databaseGptSettings;
+        provider = this.databaseGptSettings.CreateProvider();
         pipeline = pipelineProvider.GetPipeline(nameof(DatabaseGptClient));
     }
 
@@ -33,14 +33,14 @@ internal class DatabaseGptClient : IDatabaseGptClient
         var conversationExists = await chatGptClient.ConversationExistsAsync(sessionId, cancellationToken);
         if (!conversationExists)
         {
-            var tables = await provider.GetTablesAsync(databaseSettings.ExcludedTables);
+            var tables = await provider.GetTablesAsync(databaseGptSettings.IncludedTables, databaseGptSettings.ExcludedTables);
 
             var systemMessage = $"""
                 You are an assistant that answers questions using the information stored in a {provider.Name} database.
                 Your answers can only reference one or more of the following tables: '{string.Join(',', tables)}'.
                 You can create only SELECT queries. Never create INSERT, UPDATE nor DELETE command.
                 When you create a {provider.Language} query, consider the following information:
-                {databaseSettings.SystemMessage}
+                {databaseGptSettings.SystemMessage}
                 """;
 
             sessionId = await chatGptClient.SetupAsync(sessionId, systemMessage, cancellationToken);
@@ -76,7 +76,7 @@ internal class DatabaseGptClient : IDatabaseGptClient
                 await options.OnCandidateTablesFound.Invoke(new(sessionId, question, tables), serviceProvider);
             }
 
-            var createTableScripts = await provider.GetCreateTablesScriptAsync(tables, databaseSettings.ExcludedColumns);
+            var createTableScripts = await provider.GetCreateTablesScriptAsync(tables, databaseGptSettings.ExcludedColumns);
 
             request = $"""
                 A database contains the following tables and columns:

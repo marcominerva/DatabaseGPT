@@ -9,10 +9,13 @@ namespace DatabaseGpt.Abstractions;
 
 public interface IDatabaseGptProvider
 {
-    Task<IEnumerable<string>> GetTablesAsync(IEnumerable<string> excludedTables);
-    Task<string> GetCreateTablesScriptAsync(IEnumerable<string> tables, IEnumerable<string> excludedColumns);
-    Task<IDataReader> ExecuteQueryAsync(string query);
-
     string Name { get; }
+
     string Language { get; }
+
+    Task<IEnumerable<string>> GetTablesAsync(IEnumerable<string> includedTables, IEnumerable<string> excludedTables);
+
+    Task<string> GetCreateTablesScriptAsync(IEnumerable<string> tables, IEnumerable<string> excludedColumns);
+
+    Task<IDataReader> ExecuteQueryAsync(string query);
 }
