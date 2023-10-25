@@ -1,8 +1,6 @@
-﻿using DatabaseGpt.Abstractions.Exceptions;
+﻿namespace DatabaseGpt.Exceptions;
 
-namespace DatabaseGpt.Exceptions;
-
-public class InvalidSqlException : DatabaseGptException
+public class InvalidSqlException : Exception
 {
     public InvalidSqlException()
     {

@@ -4,9 +4,9 @@ namespace DatabaseGpt.Settings;
 
 public class DatabaseGptSettings : IDatabaseGptSettings
 {
-    private Func<IDatabaseGptProvider> providerFactory;
+    private Func<IDatabaseGptProvider> providerFactory = null!;
 
-    public string SystemMessage { get; set; } = "You are an AI assistant that helps people find information.";
+    public string? SystemMessage { get; set; }
 
     public string[] IncludedTables { get; set; } = Array.Empty<string>();
 
@@ -18,8 +18,10 @@ public class DatabaseGptSettings : IDatabaseGptSettings
 
     public void SetDatabaseGptProviderFactory(Func<IDatabaseGptProvider> providerFactory)
     {
+        ArgumentNullException.ThrowIfNull(providerFactory);
+
         this.providerFactory = providerFactory;
     }
 
-    internal IDatabaseGptProvider CreateProvider() => providerFactory();
+    internal IDatabaseGptProvider CreateProvider() => providerFactory.Invoke();
 }

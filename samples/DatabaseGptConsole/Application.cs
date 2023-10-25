@@ -3,7 +3,6 @@ using DatabaseGpt.Exceptions;
 using DatabaseGpt.Extensions;
 using DatabaseGpt.Models;
 using DatabaseGpt.Settings;
-using Microsoft.Extensions.Options;
 using Spectre.Console;
 
 namespace DatabaseGptConsole;
@@ -13,10 +12,10 @@ internal class Application
     private readonly IDatabaseGptClient databaseGptClient;
     private readonly DatabaseGptSettings databaseSettings;
 
-    public Application(IDatabaseGptClient databaseGptClient, IOptions<DatabaseGptSettings> databaseSettingsOptions)
+    public Application(IDatabaseGptClient databaseGptClient, DatabaseGptSettings databaseSettings)
     {
         this.databaseGptClient = databaseGptClient;
-        databaseSettings = databaseSettingsOptions.Value;
+        this.databaseSettings = databaseSettings;
     }
 
     public async Task ExecuteAsync()
@@ -46,7 +45,7 @@ internal class Application
                 AnsiConsole.WriteLine();
                 AnsiConsole.WriteLine();
 
-                AnsiConsole.WriteLine($"I think the following tables might be useful: {string.Join(", ", args.Tables)}.");
+                AnsiConsole.Write($"I think the following tables might be useful: {string.Join(", ", args.Tables)}.");
 
                 return default;
             },
@@ -57,6 +56,7 @@ internal class Application
 
                 AnsiConsole.WriteLine("The query to answer the question should be the following:");
 
+                AnsiConsole.WriteLine();
                 AnsiConsole.WriteLine(args.Sql);
                 AnsiConsole.WriteLine();
 

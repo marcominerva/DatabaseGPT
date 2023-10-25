@@ -28,16 +28,19 @@ await application.ExecuteAsync();
 static void ConfigureServices(HostBuilderContext context, IServiceCollection services)
 {
     services.AddSingleton<Application>();
-    services.AddDatabaseGpt(database =>
-        {
-            // For using SQL Server
-            database.UseConfiguration(context.Configuration)
-                    .UseSqlServer(context.Configuration["ConnectionStrings:SqlConnection"]);
 
-            // For using Postgres
-            // database.UseConfiguration(context.Configuration)
-            //         .UseNpgsql(context.Configuration["ConnectionStrings:SqlConnection"]);
-        },
-        chatgpt => chatgpt.UseConfiguration(context.Configuration)
-    );
+    services.AddDatabaseGpt(database =>
+    {
+        // For SQL Server.
+        database.UseConfiguration(context.Configuration)
+                .UseSqlServer(context.Configuration["ConnectionStrings:SqlConnection"]);
+
+        // For Postgre SQL.
+        //database.UseConfiguration(context.Configuration)
+        //        .UseNpgsql(context.Configuration["ConnectionStrings:NpgsqlConnection"]);
+    },
+    chatGpt =>
+    {
+        chatGpt.UseConfiguration(context.Configuration);
+    });
 }

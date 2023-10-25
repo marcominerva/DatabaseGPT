@@ -12,14 +12,13 @@ public class NpgsqlDatabaseGptProvider : IDatabaseGptProvider, IDisposable
     private readonly NpgsqlConnection connection;
     private bool disposedValue;
 
-    public string Name => "Postgres";
+    public string Name => "PostgreSQL";
 
-    public string Language => "Postgres SQL";
+    public string Language => "PL/pgSQL";
 
     public NpgsqlDatabaseGptProvider(NpgsqlDatabaseGptProviderConfiguration settings)
     {
         connection = new NpgsqlConnection(settings.ConnectionString);
-        connection.Open();
     }
 
     public async Task<IEnumerable<string>> GetTablesAsync(IEnumerable<string> includedTables, IEnumerable<string> excludedTables)
@@ -32,27 +31,16 @@ public class NpgsqlDatabaseGptProvider : IDatabaseGptProvider, IDisposable
 
         if (includedTables?.Any() ?? false)
         {
-            tables = tables.Where(t => includedTables.Contains(t));
+            tables = tables.Where(t => includedTables.Contains(t, StringComparer.InvariantCultureIgnoreCase));
         }
         else if (excludedTables?.Any() ?? false)
         {
-            tables = tables.Where(t => !excludedTables.Contains(t));
+            tables = tables.Where(t => !excludedTables.Contains(t, StringComparer.InvariantCultureIgnoreCase));
         }
 
         return tables;
     }
 
-    public async Task<IDataReader> ExecuteQueryAsync(string query)
-    {
-        try
-        {
-            return await connection.ExecuteReaderAsync(query);
-        }
-        catch (NpgsqlException ex)
-        {
-            throw new DatabaseGptException("An error occurred while executing the query. See the inner exception for details", ex);
-        }
-    }
     public async Task<string> GetCreateTablesScriptAsync(IEnumerable<string> tables, IEnumerable<string> excludedColumns)
     {
         var result = new StringBuilder();
@@ -80,6 +68,18 @@ public class NpgsqlDatabaseGptProvider : IDatabaseGptProvider, IDisposable
         }
 
         return result.ToString();
+    }
+
+    public async Task<IDataReader> ExecuteQueryAsync(string query)
+    {
+        try
+        {
+            return await connection.ExecuteReaderAsync(query);
+        }
+        catch (NpgsqlException ex)
+        {
+            throw new DatabaseGptException("An error occurred while executing the query. See the inner exception for details", ex);
+        }
     }
 
     protected virtual void Dispose(bool disposing)
