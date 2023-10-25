@@ -3,7 +3,6 @@ using System.Text;
 using Dapper;
 using DatabaseGpt.Abstractions;
 using DatabaseGpt.Abstractions.Exceptions;
-using DatabaseGpt.SqlServer.TypeHandlers;
 using Microsoft.Data.SqlClient;
 
 namespace DatabaseGpt.SqlServer;
@@ -17,16 +16,9 @@ public class SqlServerDatabaseGptProvider : IDatabaseGptProvider, IDisposable
 
     public string Language => "T-SQL";
 
-    static SqlServerDatabaseGptProvider()
-    {
-        SqlMapper.AddTypeHandler(new DateOnlyTypeHandler());
-        SqlMapper.AddTypeHandler(new TimeOnlyTypeHandler());
-    }
-
     public SqlServerDatabaseGptProvider(SqlServerDatabaseGptProviderConfiguration settings)
     {
         connection = new SqlConnection(settings.ConnectionString);
-        connection.Open();
     }
 
     public async Task<IEnumerable<string>> GetTablesAsync(IEnumerable<string> includedTables, IEnumerable<string> excludedTables)
@@ -35,27 +27,16 @@ public class SqlServerDatabaseGptProvider : IDatabaseGptProvider, IDisposable
 
         if (includedTables?.Any() ?? false)
         {
-            tables = tables.Where(t => includedTables.Contains(t));
+            tables = tables.Where(t => includedTables.Contains(t, StringComparer.InvariantCultureIgnoreCase));
         }
         else if (excludedTables?.Any() ?? false)
         {
-            tables = tables.Where(t => !excludedTables.Contains(t));
+            tables = tables.Where(t => !excludedTables.Contains(t, StringComparer.InvariantCultureIgnoreCase));
         }
 
         return tables;
     }
 
-    public async Task<IDataReader> ExecuteQueryAsync(string query)
-    {
-        try
-        {
-            return await connection.ExecuteReaderAsync(query);
-        }
-        catch (SqlException ex)
-        {
-            throw new DatabaseGptException("An error occurred while executing the query. See the inner exception for details", ex);
-        }
-    }
     public async Task<string> GetCreateTablesScriptAsync(IEnumerable<string> tables, IEnumerable<string> excludedColumns)
     {
         var result = new StringBuilder();
@@ -82,11 +63,23 @@ public class SqlServerDatabaseGptProvider : IDatabaseGptProvider, IDisposable
                 );
                 """;
 
-            var columns = await connection.QueryAsync<string>(query, new { schema = table.Schema, table = table.Name, ExcludedColumns = excludedColumns });
+            var columns = await connection.QueryFirstAsync<string>(query, new { schema = table.Schema, table = table.Name, ExcludedColumns = excludedColumns });
             result.AppendLine($"CREATE TABLE [{table.Schema}].[{table.Name}] ({columns});");
         }
 
         return result.ToString();
+    }
+
+    public async Task<IDataReader> ExecuteQueryAsync(string query)
+    {
+        try
+        {
+            return await connection.ExecuteReaderAsync(query);
+        }
+        catch (SqlException ex)
+        {
+            throw new DatabaseGptException("An error occurred while executing the query. See the inner exception for details.", ex);
+        }
     }
 
     protected virtual void Dispose(bool disposing)

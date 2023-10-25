@@ -1,8 +1,6 @@
-﻿using DatabaseGpt.Abstractions.Exceptions;
+﻿namespace DatabaseGpt.Exceptions;
 
-namespace DatabaseGpt.Exceptions;
-
-public class NoTableFoundException : DatabaseGptException
+public class NoTableFoundException : Exception
 {
     public NoTableFoundException()
     {

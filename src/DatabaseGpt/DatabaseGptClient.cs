@@ -4,7 +4,6 @@ using DatabaseGpt.Abstractions;
 using DatabaseGpt.Exceptions;
 using DatabaseGpt.Models;
 using DatabaseGpt.Settings;
-using Microsoft.Extensions.Options;
 using Polly;
 using Polly.Registry;
 
@@ -18,13 +17,13 @@ internal class DatabaseGptClient : IDatabaseGptClient
     private readonly ResiliencePipeline pipeline;
     private readonly DatabaseGptSettings databaseGptSettings;
 
-    public DatabaseGptClient(IChatGptClient chatGptClient, ResiliencePipelineProvider<string> pipelineProvider
-        , IServiceProvider serviceProvider, DatabaseGptSettings databaseGptSettings)
+    public DatabaseGptClient(IChatGptClient chatGptClient, ResiliencePipelineProvider<string> pipelineProvider, IServiceProvider serviceProvider, DatabaseGptSettings databaseGptSettings)
     {
         this.chatGptClient = chatGptClient;
         this.serviceProvider = serviceProvider;
         this.databaseGptSettings = databaseGptSettings;
-        provider = this.databaseGptSettings.CreateProvider();
+
+        provider = databaseGptSettings.CreateProvider();
         pipeline = pipelineProvider.GetPipeline(nameof(DatabaseGptClient));
     }
 
@@ -36,9 +35,9 @@ internal class DatabaseGptClient : IDatabaseGptClient
             var tables = await provider.GetTablesAsync(databaseGptSettings.IncludedTables, databaseGptSettings.ExcludedTables);
 
             var systemMessage = $"""
-                You are an assistant that answers questions using the information stored in a {provider.Name} database.
+                You are an assistant that answers questions using the information stored in a {provider.Name} database and the {provider.Language} language.
                 Your answers can only reference one or more of the following tables: '{string.Join(',', tables)}'.
-                You can create only SELECT queries. Never create INSERT, UPDATE nor DELETE command.
+                You can create only {provider.Language} SELECT queries. Never create INSERT, UPDATE nor DELETE command.
                 When you create a {provider.Language} query, consider the following information:
                 {databaseGptSettings.SystemMessage}
                 """;
@@ -49,7 +48,7 @@ internal class DatabaseGptClient : IDatabaseGptClient
         var reader = await pipeline.ExecuteAsync(async cancellationToken =>
         {
             var request = $"""
-                You must answer the following question, '{question}', using a {provider.Language} query. Take into account also the previous messages.
+                You must answer the following question, '{question}', using a {provider.Language} query for a {provider.Name} database. Take into account also the previous messages.
                 From the comma separated list of tables available in the database, select those tables that might be useful in the generated {provider.Language} query.
                 The selected tables should be returned in a comma separated list. Your response should just contain the comma separated list of selected tables.
                 If there are no tables that might be useful, return only the string 'NONE', without any other words. You shouldn't never explain the reason why you haven't found any table.
@@ -79,14 +78,14 @@ internal class DatabaseGptClient : IDatabaseGptClient
             var createTableScripts = await provider.GetCreateTablesScriptAsync(tables, databaseGptSettings.ExcludedColumns);
 
             request = $"""
-                A database contains the following tables and columns:
+                A {provider.Name} database contains the following tables and columns:
                 {createTableScripts}
-                Generate a {provider.Language} query to answer the question: '{question}' - the query must only reference table names and column names that appear in this request.
+                Generate a {provider.Language} query for a {provider.Name} database to answer the question: '{question}' - The query must only reference table names and column names that appear in this request.
                 For example, if the request contains the following CREATE TABLE statements:
                 CREATE TABLE Table1 (Column1 VARCHAR(255), Column2 VARCHAR(255))
                 CREATE TABLE Table2 (Column3 VARCHAR(255), Column4 VARCHAR(255))
-                Then you should only reference Tables Table1 and Table2 and the query should only reference columns Column1, Column2, Column3 and Column4.
-                Your response should just contain the {provider.Language} query, no other information is required. For example, never explain the meaning of the query nor explain how to use the query.
+                Then you should only reference tables Table1 and Table2 and the query should only reference columns Column1, Column2, Column3 and Column4.
+                Your response should just contain the {provider.Language} query for a {provider.Name} database, no other information is required. For example, never explain the meaning of the query nor explain how to use the query.
                 You can create only SELECT queries. Never create INSERT, UPDATE nor DELETE commands.
                 If the question of the user requires an INSERT, UPDATE or DELETE command, then return only the string 'NONE', without any other words. You shouldn't never explain the reason why you haven't created the query.
                 """;
