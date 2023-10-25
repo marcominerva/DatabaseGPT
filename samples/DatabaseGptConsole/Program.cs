@@ -33,11 +33,11 @@ static void ConfigureServices(HostBuilderContext context, IServiceCollection ser
     {
         // For SQL Server.
         database.UseConfiguration(context.Configuration)
-                .UseSqlServer(context.Configuration["ConnectionStrings:SqlConnection"]);
+                .UseSqlServer(context.Configuration.GetConnectionString("SqlConnection"));
 
         // For Postgre SQL.
         //database.UseConfiguration(context.Configuration)
-        //        .UseNpgsql(context.Configuration["ConnectionStrings:NpgsqlConnection"]);
+        //        .UseNpgsql(context.Configuration.GetConnectionString("NpgsqlConnection"));
     },
     chatGpt =>
     {
