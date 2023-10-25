@@ -3,14 +3,22 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.7.34024.191
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DatabaseGptConsole", "src\DatabaseGptConsole\DatabaseGptConsole.csproj", "{B57285A0-EAD8-404C-9366-5EF9348B2074}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{10230EB7-0FD6-4655-9DC8-E5FB46497A9E}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DatabaseGpt", "src\DatabaseGpt\DatabaseGpt.csproj", "{0A164E0C-FCC7-4891-8D32-417506106533}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DatabaseGpt", "src\DatabaseGpt\DatabaseGpt.csproj", "{0A164E0C-FCC7-4891-8D32-417506106533}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{38E097CA-19CD-4B33-9038-BCDF9E02AE37}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DatabaseGptConsole", "samples\DatabaseGptConsole\DatabaseGptConsole.csproj", "{257E0898-917F-4134-B31F-ABF95D4248E5}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DatabaseGpt.Abstractions", "src\DatabaseGpt.Abstractions\DatabaseGpt.Abstractions.csproj", "{F14D4B50-9823-46EA-807D-B18729DFDE14}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DatabaseGpt.SqlServer", "src\DatabaseGpt.SqlServer\DatabaseGpt.SqlServer.csproj", "{AB8B896B-63B2-4B5B-86E7-D10ED9B385F7}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DatabaseGpt.Npgsql", "src\DatabaseGpt.Npgsql\DatabaseGpt.Npgsql.csproj", "{A44B2026-201D-4B9A-B43C-82F6687561A5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -18,17 +26,32 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{B57285A0-EAD8-404C-9366-5EF9348B2074}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B57285A0-EAD8-404C-9366-5EF9348B2074}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B57285A0-EAD8-404C-9366-5EF9348B2074}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B57285A0-EAD8-404C-9366-5EF9348B2074}.Release|Any CPU.Build.0 = Release|Any CPU
 		{0A164E0C-FCC7-4891-8D32-417506106533}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{0A164E0C-FCC7-4891-8D32-417506106533}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0A164E0C-FCC7-4891-8D32-417506106533}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0A164E0C-FCC7-4891-8D32-417506106533}.Release|Any CPU.Build.0 = Release|Any CPU
+		{257E0898-917F-4134-B31F-ABF95D4248E5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{257E0898-917F-4134-B31F-ABF95D4248E5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{257E0898-917F-4134-B31F-ABF95D4248E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{257E0898-917F-4134-B31F-ABF95D4248E5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F14D4B50-9823-46EA-807D-B18729DFDE14}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F14D4B50-9823-46EA-807D-B18729DFDE14}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F14D4B50-9823-46EA-807D-B18729DFDE14}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F14D4B50-9823-46EA-807D-B18729DFDE14}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AB8B896B-63B2-4B5B-86E7-D10ED9B385F7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AB8B896B-63B2-4B5B-86E7-D10ED9B385F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AB8B896B-63B2-4B5B-86E7-D10ED9B385F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AB8B896B-63B2-4B5B-86E7-D10ED9B385F7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A44B2026-201D-4B9A-B43C-82F6687561A5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A44B2026-201D-4B9A-B43C-82F6687561A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A44B2026-201D-4B9A-B43C-82F6687561A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A44B2026-201D-4B9A-B43C-82F6687561A5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{257E0898-917F-4134-B31F-ABF95D4248E5} = {38E097CA-19CD-4B33-9038-BCDF9E02AE37}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3CD62F01-A1CB-4AD9-93D9-F9936BC2F474}

@@ -11,9 +11,9 @@ namespace DatabaseGptConsole;
 internal class Application
 {
     private readonly IDatabaseGptClient databaseGptClient;
-    private readonly DatabaseSettings databaseSettings;
+    private readonly DatabaseGptSettings databaseSettings;
 
-    public Application(IDatabaseGptClient databaseGptClient, IOptions<DatabaseSettings> databaseSettingsOptions)
+    public Application(IDatabaseGptClient databaseGptClient, IOptions<DatabaseGptSettings> databaseSettingsOptions)
     {
         this.databaseGptClient = databaseGptClient;
         databaseSettings = databaseSettingsOptions.Value;

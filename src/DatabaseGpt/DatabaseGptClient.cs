@@ -1,7 +1,6 @@
 ﻿using System.Data;
-using System.Text;
 using ChatGptNet;
-using DatabaseGpt.DataAccessLayer;
+using DatabaseGpt.Abstractions;
 using DatabaseGpt.Exceptions;
 using DatabaseGpt.Models;
 using DatabaseGpt.Settings;
@@ -14,17 +13,18 @@ namespace DatabaseGpt;
 internal class DatabaseGptClient : IDatabaseGptClient
 {
     private readonly IChatGptClient chatGptClient;
-    private readonly ISqlContext sqlContext;
+    private readonly IDatabaseGptProvider provider;
     private readonly IServiceProvider serviceProvider;
     private readonly ResiliencePipeline pipeline;
-    private readonly DatabaseSettings databaseSettings;
+    private readonly DatabaseGptSettings databaseGptSettings;
 
-    public DatabaseGptClient(IChatGptClient chatGptClient, ISqlContext sqlContext, ResiliencePipelineProvider<string> pipelineProvider, IServiceProvider serviceProvider, IOptions<DatabaseSettings> databaseSettingsOptions)
+    public DatabaseGptClient(IChatGptClient chatGptClient, ResiliencePipelineProvider<string> pipelineProvider
+        , IServiceProvider serviceProvider, DatabaseGptSettings databaseGptSettings)
     {
         this.chatGptClient = chatGptClient;
-        this.sqlContext = sqlContext;
         this.serviceProvider = serviceProvider;
-        databaseSettings = databaseSettingsOptions.Value;
+        this.databaseGptSettings = databaseGptSettings;
+        provider = this.databaseGptSettings.CreateProvider();
         pipeline = pipelineProvider.GetPipeline(nameof(DatabaseGptClient));
     }
 
@@ -33,14 +33,14 @@ internal class DatabaseGptClient : IDatabaseGptClient
         var conversationExists = await chatGptClient.ConversationExistsAsync(sessionId, cancellationToken);
         if (!conversationExists)
         {
-            var tables = await GetTablesAsync();
+            var tables = await provider.GetTablesAsync(databaseGptSettings.IncludedTables, databaseGptSettings.ExcludedTables);
 
             var systemMessage = $"""
-                You are an assistant that answers questions using the information stored in a SQL Server database.
+                You are an assistant that answers questions using the information stored in a {provider.Name} database.
                 Your answers can only reference one or more of the following tables: '{string.Join(',', tables)}'.
                 You can create only SELECT queries. Never create INSERT, UPDATE nor DELETE command.
-                When you create a T-SQL query, consider the following information:
-                {databaseSettings.SystemMessage}
+                When you create a {provider.Language} query, consider the following information:
+                {databaseGptSettings.SystemMessage}
                 """;
 
             sessionId = await chatGptClient.SetupAsync(sessionId, systemMessage, cancellationToken);
@@ -49,8 +49,8 @@ internal class DatabaseGptClient : IDatabaseGptClient
         var reader = await pipeline.ExecuteAsync(async cancellationToken =>
         {
             var request = $"""
-                You must answer the following question, '{question}', using a T-SQL query. Take into account also the previous messages.
-                From the comma separated list of tables available in the database, select those tables that might be useful in the generated T-SQL query.
+                You must answer the following question, '{question}', using a {provider.Language} query. Take into account also the previous messages.
+                From the comma separated list of tables available in the database, select those tables that might be useful in the generated {provider.Language} query.
                 The selected tables should be returned in a comma separated list. Your response should just contain the comma separated list of selected tables.
                 If there are no tables that might be useful, return only the string 'NONE', without any other words. You shouldn't never explain the reason why you haven't found any table.
                 If the question is unclear or you don't understand the question, or you need a clarification, then return only the string 'NONE', without any other words. 
@@ -76,17 +76,17 @@ internal class DatabaseGptClient : IDatabaseGptClient
                 await options.OnCandidateTablesFound.Invoke(new(sessionId, question, tables), serviceProvider);
             }
 
-            var createTableScripts = await GetCreateTablesScriptAsync(tables, databaseSettings.ExcludedColumns);
+            var createTableScripts = await provider.GetCreateTablesScriptAsync(tables, databaseGptSettings.ExcludedColumns);
 
             request = $"""
                 A database contains the following tables and columns:
                 {createTableScripts}
-                Generate a T-SQL query to answer the question: '{question}' - the query must only reference table names and column names that appear in this request.
+                Generate a {provider.Language} query to answer the question: '{question}' - the query must only reference table names and column names that appear in this request.
                 For example, if the request contains the following CREATE TABLE statements:
                 CREATE TABLE Table1 (Column1 VARCHAR(255), Column2 VARCHAR(255))
                 CREATE TABLE Table2 (Column3 VARCHAR(255), Column4 VARCHAR(255))
                 Then you should only reference Tables Table1 and Table2 and the query should only reference columns Column1, Column2, Column3 and Column4.
-                Your response should just contain the T-SQL query, no other information is required. For example, never explain the meaning of the query nor explain how to use the query.
+                Your response should just contain the {provider.Language} query, no other information is required. For example, never explain the meaning of the query nor explain how to use the query.
                 You can create only SELECT queries. Never create INSERT, UPDATE nor DELETE commands.
                 If the question of the user requires an INSERT, UPDATE or DELETE command, then return only the string 'NONE', without any other words. You shouldn't never explain the reason why you haven't created the query.
                 """;
@@ -107,65 +107,10 @@ internal class DatabaseGptClient : IDatabaseGptClient
                 await options.OnQueryGenerated.Invoke(new(sessionId, question, tables, sql), serviceProvider);
             }
 
-            var reader = await ExecuteQueryAsync(sql);
+            var reader = await provider.ExecuteQueryAsync(sql);
             return reader;
         }, cancellationToken);
 
         return reader;
-    }
-
-    private async Task<IEnumerable<string>> GetTablesAsync()
-    {
-        var tables = await sqlContext.GetDataAsync<string>("SELECT TABLE_SCHEMA + '.' + TABLE_NAME AS Tables FROM INFORMATION_SCHEMA.TABLES;");
-
-        if (databaseSettings.IncludedTables?.Any() ?? false)
-        {
-            tables = tables.Where(t => databaseSettings.IncludedTables.Contains(t, StringComparer.InvariantCultureIgnoreCase));
-        }
-        else if (databaseSettings.ExcludedTables?.Any() ?? false)
-        {
-            tables = tables.Where(t => !databaseSettings.ExcludedTables.Contains(t, StringComparer.InvariantCultureIgnoreCase));
-        }
-
-        return tables;
-    }
-
-    private async Task<string> GetCreateTablesScriptAsync(IEnumerable<string> tables, IEnumerable<string> excludedColumns)
-    {
-        var result = new StringBuilder();
-        var splittedTableNames = tables.Select(t =>
-        {
-            var parts = t.Split('.');
-            var schema = parts[0].Trim();
-            var name = parts[1].Trim();
-            return new { Schema = schema, Name = name };
-        });
-
-        foreach (var table in splittedTableNames)
-        {
-            var query = $"""
-                SELECT STUFF(
-                	(SELECT ',' + '[' + COLUMN_NAME + '] ' + 
-                	    UPPER(DATA_TYPE) + ISNULL('(' + IIF(CHARACTER_MAXIMUM_LENGTH = -1, 'MAX', CAST(CHARACTER_MAXIMUM_LENGTH AS VARCHAR(10))) + ')','') + ' ' + 
-                	    CASE WHEN IS_NULLABLE = 'YES' THEN 'NULL' ELSE 'NOT NULL' END
-                	FROM
-                        INFORMATION_SCHEMA.COLUMNS
-                	WHERE
-                        TABLE_SCHEMA = @schema AND TABLE_NAME = @table AND COLUMN_NAME NOT IN @excludedColumns
-                	FOR XML PATH('')), 1, 1, ''
-                );
-                """;
-
-            var columns = await sqlContext.GetObjectAsync<string>(query, new { schema = table.Schema, table = table.Name, ExcludedColumns = excludedColumns });
-            result.AppendLine($"CREATE TABLE [{table.Schema}].[{table.Name}] ({columns});");
-        }
-
-        return result.ToString();
-    }
-
-    private async Task<IDataReader> ExecuteQueryAsync(string sql)
-    {
-        var result = await sqlContext.GetDataReaderAsync(sql);
-        return result;
     }
 }
