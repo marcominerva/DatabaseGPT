@@ -1,4 +1,4 @@
-﻿using System.Data;
+﻿using System.Data.Common;
 using ChatGptNet;
 using DatabaseGpt.Abstractions;
 using DatabaseGpt.Exceptions;
@@ -27,7 +27,7 @@ internal class DatabaseGptClient : IDatabaseGptClient
         pipeline = pipelineProvider.GetPipeline(nameof(DatabaseGptClient));
     }
 
-    public async Task<IDataReader> ExecuteNaturalLanguageQueryAsync(Guid sessionId, string question, NaturalLanguageQueryOptions? options = null, CancellationToken cancellationToken = default)
+    public async Task<DbDataReader> ExecuteNaturalLanguageQueryAsync(Guid sessionId, string question, NaturalLanguageQueryOptions? options = null, CancellationToken cancellationToken = default)
     {
         var conversationExists = await chatGptClient.ConversationExistsAsync(sessionId, cancellationToken);
         if (!conversationExists)

@@ -87,15 +87,23 @@ internal class Application
                         var values = new List<Markup>();
                         for (var i = 0; i < reader.FieldCount; i++)
                         {
-                            var value = new Markup(reader[i]?.ToString() ?? string.Empty);
-
-                            var type = reader.GetFieldType(i);
-                            if (type != typeof(string))
+                            var dataType = reader.GetDataTypeName(i);
+                            var value = dataType switch
                             {
-                                value.RightJustified();
+                                "date" when reader.GetValue(i) != DBNull.Value => reader.GetFieldValue<DateOnly>(i).ToString(),
+                                "time" when reader.GetValue(i) != DBNull.Value => reader.GetFieldValue<TimeOnly>(i).ToString(),
+                                _ => reader[i]?.ToString()
+                            };
+
+                            var markup = new Markup(value?.EscapeMarkup() ?? string.Empty);
+
+                            var type = reader!.GetFieldType(i);
+                            if (type != typeof(string) && type != typeof(Guid) && type != typeof(Guid?))
+                            {
+                                markup.RightJustified();
                             }
 
-                            values.Add(value);
+                            values.Add(markup);
                         }
 
                         table.AddRow(values.ToArray());

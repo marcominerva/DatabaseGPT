@@ -1,9 +1,9 @@
-﻿using System.Data;
+﻿using System.Data.Common;
 using DatabaseGpt.Models;
 
 namespace DatabaseGpt;
 
 public interface IDatabaseGptClient
 {
-    Task<IDataReader> ExecuteNaturalLanguageQueryAsync(Guid sessionId, string question, NaturalLanguageQueryOptions? options = null, CancellationToken cancellationToken = default);
+    Task<DbDataReader> ExecuteNaturalLanguageQueryAsync(Guid sessionId, string question, NaturalLanguageQueryOptions? options = null, CancellationToken cancellationToken = default);
 }
