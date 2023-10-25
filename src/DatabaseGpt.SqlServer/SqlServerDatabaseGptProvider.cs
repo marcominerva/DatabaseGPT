@@ -78,7 +78,7 @@ public class SqlServerDatabaseGptProvider : IDatabaseGptProvider, IDisposable
         }
         catch (SqlException ex)
         {
-            throw new DatabaseGptException("An error occurred while executing the query. See the inner exception for details", ex);
+            throw new DatabaseGptException("An error occurred while executing the query. See the inner exception for details.", ex);
         }
     }
 

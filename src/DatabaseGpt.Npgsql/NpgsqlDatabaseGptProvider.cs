@@ -78,7 +78,7 @@ public class NpgsqlDatabaseGptProvider : IDatabaseGptProvider, IDisposable
         }
         catch (NpgsqlException ex)
         {
-            throw new DatabaseGptException("An error occurred while executing the query. See the inner exception for details", ex);
+            throw new DatabaseGptException("An error occurred while executing the query. See the inner exception for details.", ex);
         }
     }
 
