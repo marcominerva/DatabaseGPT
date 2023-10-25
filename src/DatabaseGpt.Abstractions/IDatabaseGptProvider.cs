@@ -1,4 +1,4 @@
-﻿using System.Data;
+﻿using System.Data.Common;
 
 namespace DatabaseGpt.Abstractions;
 
@@ -12,5 +12,5 @@ public interface IDatabaseGptProvider
 
     Task<string> GetCreateTablesScriptAsync(IEnumerable<string> tables, IEnumerable<string> excludedColumns);
 
-    Task<IDataReader> ExecuteQueryAsync(string query);
+    Task<DbDataReader> ExecuteQueryAsync(string query);
 }

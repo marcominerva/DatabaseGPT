@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using System.Data.Common;
 using System.Text;
 using Dapper;
 using DatabaseGpt.Abstractions;
@@ -70,7 +71,7 @@ public class NpgsqlDatabaseGptProvider : IDatabaseGptProvider, IDisposable
         return result.ToString();
     }
 
-    public async Task<IDataReader> ExecuteQueryAsync(string query)
+    public async Task<DbDataReader> ExecuteQueryAsync(string query)
     {
         try
         {
