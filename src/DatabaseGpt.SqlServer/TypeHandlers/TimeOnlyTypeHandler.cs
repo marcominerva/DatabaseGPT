@@ -1,7 +1,7 @@
 ﻿using System.Data;
 using Dapper;
 
-namespace DatabaseGpt.DataAccessLayer.TypeHandlers;
+namespace DatabaseGpt.SqlServer.TypeHandlers;
 
 internal class TimeOnlyTypeHandler : SqlMapper.TypeHandler<TimeOnly>
 {

@@ -5,17 +5,24 @@
         <TargetFramework>net7.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <UserSecretsId>cace36d6-2904-4a1a-ae73-7f5071a723ed</UserSecretsId>
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="Spectre.Console" Version="0.47.0" />
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.1" />
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\DatabaseGpt\DatabaseGpt.csproj" />
+      <ProjectReference Include="..\..\src\DatabaseGpt.Npgsql\DatabaseGpt.Npgsql.csproj" />
+      <ProjectReference Include="..\..\src\DatabaseGpt.SqlServer\DatabaseGpt.SqlServer.csproj" />
+      <ProjectReference Include="..\..\src\DatabaseGpt\DatabaseGpt.csproj" />
     </ItemGroup>
 
     <ItemGroup>
+        <None Update="appsettings.local.json">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
         <None Update="appsettings.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>

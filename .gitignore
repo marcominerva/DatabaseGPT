@@ -398,3 +398,4 @@ FodyWeavers.xsd
 *.sln.iml
 
 /src/DatabaseGptConsole/appsettings.local.json
+/samples/DatabaseGptConsole/appsettings.local.json
