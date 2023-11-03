@@ -9,13 +9,14 @@ using Polly.Registry;
 
 namespace DatabaseGpt;
 
-internal class DatabaseGptClient : IDatabaseGptClient
+internal class DatabaseGptClient : IDatabaseGptClient, IDisposable
 {
     private readonly IChatGptClient chatGptClient;
     private readonly IDatabaseGptProvider provider;
     private readonly IServiceProvider serviceProvider;
     private readonly ResiliencePipeline pipeline;
     private readonly DatabaseGptSettings databaseGptSettings;
+    private bool disposedValue;
 
     public DatabaseGptClient(IChatGptClient chatGptClient, ResiliencePipelineProvider<string> pipelineProvider, IServiceProvider serviceProvider, DatabaseGptSettings databaseGptSettings)
     {
@@ -112,5 +113,24 @@ internal class DatabaseGptClient : IDatabaseGptClient
         }, cancellationToken);
 
         return reader;
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!disposedValue)
+        {
+            if (disposing)
+            {
+                provider.Dispose();
+            }
+
+            disposedValue = true;
+        }
+    }
+
+    public void Dispose()
+    {
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
     }
 }
