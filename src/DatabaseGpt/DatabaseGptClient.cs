@@ -85,7 +85,8 @@ internal class DatabaseGptClient : IDatabaseGptClient
                 CREATE TABLE Table1 (Column1 VARCHAR(255), Column2 VARCHAR(255))
                 CREATE TABLE Table2 (Column3 VARCHAR(255), Column4 VARCHAR(255))
                 Then you should only reference tables Table1 and Table2 and the query should only reference columns Column1, Column2, Column3 and Column4.
-                Your response should just contain the {provider.Language} query for a {provider.Name} database, no other information is required. For example, never explain the meaning of the query nor explain how to use the query.
+                Your response should only contain the {provider.Language} query for a {provider.Name} database, no other information is required. For example, never explain the meaning of the query nor explain how to use the query.
+                The query should only contain the SQL keywords that are available in a {provider.Language} SELECT query. For example, if the database is SQL SERVER, then the query should not contain the LIMIT keyword.
                 You can create only SELECT queries. Never create INSERT, UPDATE nor DELETE commands.
                 If the question of the user requires an INSERT, UPDATE or DELETE command, then return only the string 'NONE', without any other words. You shouldn't never explain the reason why you haven't created the query.
                 """;
