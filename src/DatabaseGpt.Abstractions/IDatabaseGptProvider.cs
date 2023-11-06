@@ -2,7 +2,7 @@
 
 namespace DatabaseGpt.Abstractions;
 
-public interface IDatabaseGptProvider
+public interface IDatabaseGptProvider : IDisposable
 {
     string Name { get; }
 
