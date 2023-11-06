@@ -9,13 +9,14 @@ using Polly.Registry;
 
 namespace DatabaseGpt;
 
-internal class DatabaseGptClient : IDatabaseGptClient, IDisposable
+internal class DatabaseGptClient : IDatabaseGptClient
 {
     private readonly IChatGptClient chatGptClient;
     private readonly IDatabaseGptProvider provider;
     private readonly IServiceProvider serviceProvider;
     private readonly ResiliencePipeline pipeline;
     private readonly DatabaseGptSettings databaseGptSettings;
+
     private bool disposedValue;
 
     public DatabaseGptClient(IChatGptClient chatGptClient, ResiliencePipelineProvider<string> pipelineProvider, IServiceProvider serviceProvider, DatabaseGptSettings databaseGptSettings)
@@ -30,6 +31,8 @@ internal class DatabaseGptClient : IDatabaseGptClient, IDisposable
 
     public async Task<DbDataReader> ExecuteNaturalLanguageQueryAsync(Guid sessionId, string question, NaturalLanguageQueryOptions? options = null, CancellationToken cancellationToken = default)
     {
+        ThrowIfDisposed();
+
         var conversationExists = await chatGptClient.ConversationExistsAsync(sessionId, cancellationToken);
         if (!conversationExists)
         {
@@ -132,5 +135,13 @@ internal class DatabaseGptClient : IDatabaseGptClient, IDisposable
     {
         Dispose(disposing: true);
         GC.SuppressFinalize(this);
+    }
+
+    private void ThrowIfDisposed()
+    {
+        if (disposedValue)
+        {
+            throw new ObjectDisposedException(GetType().FullName);
+        }
     }
 }

@@ -8,7 +8,7 @@ using Microsoft.Data.SqlClient;
 
 namespace DatabaseGpt.SqlServer;
 
-public class SqlServerDatabaseGptProvider : IDatabaseGptProvider, IDisposable
+public class SqlServerDatabaseGptProvider : IDatabaseGptProvider
 {
     private readonly SqlConnection connection;
     private bool disposedValue;
@@ -24,6 +24,8 @@ public class SqlServerDatabaseGptProvider : IDatabaseGptProvider, IDisposable
 
     public async Task<IEnumerable<string>> GetTablesAsync(IEnumerable<string> includedTables, IEnumerable<string> excludedTables)
     {
+        ThrowIfDisposed();
+
         var tables = await connection.QueryAsync<string>("SELECT TABLE_SCHEMA + '.' + TABLE_NAME AS Tables FROM INFORMATION_SCHEMA.TABLES;");
 
         if (includedTables?.Any() ?? false)
@@ -40,6 +42,8 @@ public class SqlServerDatabaseGptProvider : IDatabaseGptProvider, IDisposable
 
     public async Task<string> GetCreateTablesScriptAsync(IEnumerable<string> tables, IEnumerable<string> excludedColumns)
     {
+        ThrowIfDisposed();
+
         var result = new StringBuilder();
         var splittedTableNames = tables.Select(t =>
         {
@@ -73,6 +77,8 @@ public class SqlServerDatabaseGptProvider : IDatabaseGptProvider, IDisposable
 
     public async Task<DbDataReader> ExecuteQueryAsync(string query)
     {
+        ThrowIfDisposed();
+
         try
         {
             return await connection.ExecuteReaderAsync(query);
@@ -100,5 +106,13 @@ public class SqlServerDatabaseGptProvider : IDatabaseGptProvider, IDisposable
     {
         Dispose(disposing: true);
         GC.SuppressFinalize(this);
+    }
+
+    private void ThrowIfDisposed()
+    {
+        if (disposedValue)
+        {
+            throw new ObjectDisposedException(GetType().FullName);
+        }
     }
 }
