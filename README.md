@@ -4,7 +4,7 @@
 [![CodeQL](https://github.com/marcominerva/DatabaseGPT/actions/workflows/codeql.yml/badge.svg)](https://github.com/marcominerva/DatabaseGPT/actions/workflows/codeql.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/marcominerva/TinyHelpers/blob/master/LICENSE)
 
-Query a generic SQL Server or Postgre Sql database using natural language.
+Query a database using natural language.
 
 Thanks to [Adam Buckley](https://github.com/happyadam73/tsql-chatgpt) for the [original inspiration](https://www.linkedin.com/pulse/query-your-data-azure-sql-using-natural-language-chatgpt-adam-buckley/) for this project.
 
@@ -12,17 +12,19 @@ Thanks to [Adam Buckley](https://github.com/happyadam73/tsql-chatgpt) for the [o
 
 ### Usage
 
-Currently, only SQL Server and Postgre Sql are supported.
+Currently, SQL Server and PostgreSQL databases are supported.
 
 #### Using DatabaseGpt in your project
-If you want to use DatabaseGpt as a library in your application, you can reference the `DatabaseGpt/DatabaseGpt.csproj` and the project that contains the specific implementation for your DBMS `DatabaseGpt.<DBMS>/DatabaseGpt.<DBMS>.csproj`. 
+
+If you want to use **DatabaseGpt** as a library in your application, you can reference the `DatabaseGpt/DatabaseGpt.csproj` project and the one that contains the specific implementation for your DBMS, available as `DatabaseGpt.<DBMS>/DatabaseGpt.<DBMS>.csproj`:
 
 Database|Project to include
 -|-
 SQL Server|DatabaseGpt.SqlServer/DatabaseGpt.SqlServer.csproj
-Postgre SQL|DatabaseGpt.Npgsql/DatabaseGpt.Npgsql.csproj
+PostgreSQL|DatabaseGpt.Npgsql/DatabaseGpt.Npgsql.csproj
 
-After referencing the proper projects, you can easily initialize DatabaseGpt at the startup of your application.
+After referencing the proper projects, you can easily initialize **DatabaseGpt** at the startup of your application.
+
 ```csharp
 static void ConfigureServices(HostBuilderContext context, IServiceCollection services)
 {
@@ -34,7 +36,7 @@ static void ConfigureServices(HostBuilderContext context, IServiceCollection ser
         database.UseConfiguration(context.Configuration)
                 .UseSqlServer(context.Configuration.GetConnectionString("SqlConnection"));
 
-        // For Postgre SQL.
+        // For PostgreSQL.
         //database.UseConfiguration(context.Configuration)
         //        .UseNpgsql(context.Configuration.GetConnectionString("NpgsqlConnection"));
     },
@@ -45,9 +47,9 @@ static void ConfigureServices(HostBuilderContext context, IServiceCollection ser
 }
 ```
 
-#### Using the console test application.
+#### Using the console test application
 
-The [DatabaseGptConsole](https://github.com/marcominerva/DatabaseGPT/tree/master/src/DatabaseGptConsole) project is a .NET console application that can be used to test the library. It requires .NET 7.0 SDK or later. If you just want to run the application, you can safely download the binaries from the [Releases section](https://github.com/marcominerva/DatabaseGPT/releases/tag/v1.1.2).
+The [DatabaseGptConsole](https://github.com/marcominerva/DatabaseGPT/tree/master/samples/DatabaseGptConsole) project is a .NET console application that can be used to test the library. It requires .NET 7.0 SDK or later. If you just want to run the application, you can safely download the binaries from the [Releases section](https://github.com/marcominerva/DatabaseGPT/releases).
 
 You need to set the required values in the [appsettings.json](https://github.com/marcominerva/DatabaseGPT/blob/master/src/DatabaseGptConsole/appsettings.json) file:
 
