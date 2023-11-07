@@ -26,25 +26,22 @@ PostgreSQL|DatabaseGpt.Npgsql/DatabaseGpt.Npgsql.csproj
 After referencing the proper projects, you can easily initialize **DatabaseGpt** at the startup of your application.
 
 ```csharp
-static void ConfigureServices(HostBuilderContext context, IServiceCollection services)
+// ...
+
+builder.Services.AddDatabaseGpt(database =>
 {
-    services.AddSingleton<Application>();
+    // For SQL Server.
+    database.UseConfiguration(context.Configuration)
+            .UseSqlServer(context.Configuration.GetConnectionString("SqlConnection"));
 
-    services.AddDatabaseGpt(database =>
-    {
-        // For SQL Server.
-        database.UseConfiguration(context.Configuration)
-                .UseSqlServer(context.Configuration.GetConnectionString("SqlConnection"));
-
-        // For PostgreSQL.
-        //database.UseConfiguration(context.Configuration)
-        //        .UseNpgsql(context.Configuration.GetConnectionString("NpgsqlConnection"));
-    },
-    chatGpt =>
-    {
-        chatGpt.UseConfiguration(context.Configuration);
-    });
-}
+    // For PostgreSQL.
+    //database.UseConfiguration(context.Configuration)
+    //        .UseNpgsql(context.Configuration.GetConnectionString("NpgsqlConnection"));
+},
+chatGpt =>
+{
+    chatGpt.UseConfiguration(context.Configuration);
+});
 ```
 
 #### Using the console test application
