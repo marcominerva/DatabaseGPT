@@ -4,13 +4,48 @@
 [![CodeQL](https://github.com/marcominerva/DatabaseGPT/actions/workflows/codeql.yml/badge.svg)](https://github.com/marcominerva/DatabaseGPT/actions/workflows/codeql.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/marcominerva/TinyHelpers/blob/master/LICENSE)
 
-Query a generic SQL Server database using natural language.
+Query a generic SQL Server or Postgre Sql database using natural language.
 
 Thanks to [Adam Buckley](https://github.com/happyadam73/tsql-chatgpt) for the [original inspiration](https://www.linkedin.com/pulse/query-your-data-azure-sql-using-natural-language-chatgpt-adam-buckley/) for this project.
 
 ![](https://raw.githubusercontent.com/marcominerva/DatabaseGPT/master/assets/DatabaseGptConsole.gif)
 
 ### Usage
+
+Currently, only SQL Server and Postgre Sql are supported.
+
+#### Using DatabaseGpt in your project
+If you want to use DatabaseGpt as a library in your application, you can reference the `DatabaseGpt/DatabaseGpt.csproj` and the project that contains the specific implementation for your DBMS `DatabaseGpt.<DBMS>/DatabaseGpt.<DBMS>.csproj`. 
+
+Database|Project to include
+-|-
+SQL Server|DatabaseGpt.SqlServer/DatabaseGpt.SqlServer.csproj
+Postgre SQL|DatabaseGpt.Npgsql/DatabaseGpt.Npgsql.csproj
+
+After referencing the proper projects, you can easily initialize DatabaseGpt at the startup of your application.
+```csharp
+static void ConfigureServices(HostBuilderContext context, IServiceCollection services)
+{
+    services.AddSingleton<Application>();
+
+    services.AddDatabaseGpt(database =>
+    {
+        // For SQL Server.
+        database.UseConfiguration(context.Configuration)
+                .UseSqlServer(context.Configuration.GetConnectionString("SqlConnection"));
+
+        // For Postgre SQL.
+        //database.UseConfiguration(context.Configuration)
+        //        .UseNpgsql(context.Configuration.GetConnectionString("NpgsqlConnection"));
+    },
+    chatGpt =>
+    {
+        chatGpt.UseConfiguration(context.Configuration);
+    });
+}
+```
+
+#### Using the console test application.
 
 The [DatabaseGptConsole](https://github.com/marcominerva/DatabaseGPT/tree/master/src/DatabaseGptConsole) project is a .NET console application that can be used to test the library. It requires .NET 7.0 SDK or later. If you just want to run the application, you can safely download the binaries from the [Releases section](https://github.com/marcominerva/DatabaseGPT/releases/tag/v1.1.2).
 
@@ -28,7 +63,7 @@ You need to set the required values in the [appsettings.json](https://github.com
     "AuthenticationType": "ApiKey", // Optional, used only by Azure OpenAI Service. Allowed values: ApiKey (default) or ActiveDirectory
     "DefaultModel": "my-model"      // Required  
 },
-"DatabaseSettings": {
+"DatabaseGptSettings": {
     "ExcludedTables": [ ],          // Array of table names to exclude (in the form of "schema.table")
     "ExcludedColumns": [ ],         // Array of column names to exclude
     "MaxRetries": 3                 // Max retries when the query fails
