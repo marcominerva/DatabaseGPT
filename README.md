@@ -16,12 +16,12 @@ Currently, SQL Server and PostgreSQL databases are supported.
 
 #### Using DatabaseGpt in your project
 
-If you want to use **DatabaseGpt** as a library in your application, you can reference the `DatabaseGpt/DatabaseGpt.csproj` project and the one that contains the specific implementation for your DBMS, available as `DatabaseGpt.<DBMS>/DatabaseGpt.<DBMS>.csproj`:
+If you want to use **DatabaseGpt** as a library in your application, you can reference the `src/DatabaseGpt/DatabaseGpt.csproj` project and the one that contains the specific implementation for your DBMS, available as `src/DatabaseGpt.<DBMS>/DatabaseGpt.<DBMS>.csproj`:
 
 Database|Project to include
 -|-
-SQL Server|DatabaseGpt.SqlServer/DatabaseGpt.SqlServer.csproj
-PostgreSQL|DatabaseGpt.Npgsql/DatabaseGpt.Npgsql.csproj
+SQL Server|src/DatabaseGpt.SqlServer/DatabaseGpt.SqlServer.csproj
+PostgreSQL|src/DatabaseGpt.Npgsql/DatabaseGpt.Npgsql.csproj
 
 After referencing the proper projects, you can easily initialize **DatabaseGpt** at the startup of your application.
 
