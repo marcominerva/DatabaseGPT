@@ -35,7 +35,7 @@ static void ConfigureServices(HostBuilderContext context, IServiceCollection ser
         database.UseConfiguration(context.Configuration)
                 .UseSqlServer(context.Configuration.GetConnectionString("SqlConnection"));
 
-        // For Postgre SQL.
+        // For PostgreSQL.
         //database.UseConfiguration(context.Configuration)
         //        .UseNpgsql(context.Configuration.GetConnectionString("NpgsqlConnection"));
     },

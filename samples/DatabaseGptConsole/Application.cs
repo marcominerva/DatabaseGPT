@@ -120,7 +120,7 @@ internal class Application
             catch (InvalidSqlException)
             {
                 AnsiConsole.WriteLine();
-                AnsiConsole.Markup($"I'm sorry, but the question [green]{question}[/] requires an INSERT, UPDATE or DELETE query, that isn't supported.");
+                AnsiConsole.Markup($"I'm sorry, but the question [green]{question}[/] requires an INSERT, UPDATE or DELETE query, that aren't supported.");
             }
             catch (Exception ex)
             {
