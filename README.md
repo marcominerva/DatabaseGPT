@@ -52,8 +52,8 @@ You need to set the required values in the [appsettings.json](https://github.com
 
 ```
 "ConnectionStrings": {
-    "SqlConnection": ""       // The SQL Server connection string    
-    //"NpgsqlConnection": ""  // The PostgreSQL connection string
+    "SqlConnection": ""             // The SQL Server connection string    
+    //"NpgsqlConnection": ""        // The PostgreSQL connection string
 },
 "ChatGPT": {
     "Provider": "OpenAI",           // Optional. Allowed values: OpenAI (default) or Azure
