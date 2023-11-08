@@ -53,7 +53,7 @@ You need to set the required values in the [appsettings.json](https://github.com
 ```
 "ConnectionStrings": {
     // For SqlServer
-    "SqlConnection": "" The database connection string
+    "SqlConnection": "" // The database connection string
 
     // For Postgre Sql
     // "NpgsqlConnection": "" // The database connection string
