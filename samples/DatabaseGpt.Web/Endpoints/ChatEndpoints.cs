@@ -25,7 +25,7 @@ public class ChatEndpoints : IEndpointRouteHandlerBuilder
 
     public static async Task<IResult> AskAsync(ChatRequest request, IChatService chatService, HttpContext httpContext)
     {
-        var result = await chatService.AskAsync(request);
+        var result = await chatService.AskQueryAsync(request);
 
         var response = httpContext.CreateResponse(result);
         return response;

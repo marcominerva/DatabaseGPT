@@ -10,7 +10,7 @@ public class ChatService(IDatabaseGptClient databaseGptClient, IChatGptClient ch
 {
     private const string ContentFilteredMessage = "***** (The response was filtered by the content filtering system. Please modify your prompt and retry. To learn more about content filtering policies please read the documentation: https://go.microsoft.com/fwlink/?linkid=2198766)";
 
-    public async Task<Result<ChatResponse>> AskAsync(ChatRequest request)
+    public async Task<Result<ChatResponse>> AskQueryAsync(ChatRequest request)
     {
         var response = await databaseGptClient.GetNaturalLanguageQueryAsync(request.ConversationId, request.Message);
         return new ChatResponse(response);

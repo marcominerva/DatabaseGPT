@@ -5,7 +5,7 @@ namespace DatabaseGpt.Web.Services.Interfaces;
 
 public interface IChatService
 {
-    Task<Result<ChatResponse>> AskAsync(ChatRequest request);
+    Task<Result<ChatResponse>> AskQueryAsync(ChatRequest request);
 
     IAsyncEnumerable<string> AskStreamAsync(ChatRequest request);
 }
