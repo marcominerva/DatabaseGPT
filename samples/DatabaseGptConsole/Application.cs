@@ -48,7 +48,7 @@ internal class Application(IDatabaseGptClient databaseGptClient, DatabaseGptSett
                 AnsiConsole.WriteLine("The query to answer the question should be the following:");
 
                 AnsiConsole.WriteLine();
-                AnsiConsole.WriteLine(args.Sql);
+                AnsiConsole.WriteLine(args.Query);
                 AnsiConsole.WriteLine();
 
                 return default;
