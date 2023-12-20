@@ -399,3 +399,4 @@ FodyWeavers.xsd
 
 /src/DatabaseGptConsole/appsettings.local.json
 /samples/DatabaseGptConsole/appsettings.local.json
+/samples/DatabaseGpt.Web/appsettings.local.json
