@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text.Json.Serialization;
 using ChatGptNet;
+using DatabaseGpt;
 using DatabaseGpt.Web.ExceptionHandlers;
 using DatabaseGpt.Web.Extensions;
 using DatabaseGpt.Web.Services;
@@ -26,7 +27,20 @@ builder.Services.AddRazorPages();
 
 builder.Services.AddWebOptimizer(minifyCss: true, minifyJavaScript: builder.Environment.IsProduction());
 
-builder.Services.AddChatGpt(builder.Configuration);
+builder.Services.AddDatabaseGpt(database =>
+{
+    // For SQL Server.
+    database.UseConfiguration(builder.Configuration)
+            .UseSqlServer(builder.Configuration.GetConnectionString("SqlConnection"));
+
+    // For PostgreSQL.
+    //database.UseConfiguration(context.Configuration)
+    //        .UseNpgsql(context.Configuration.GetConnectionString("NpgsqlConnection"));
+},
+chatGpt =>
+{
+    chatGpt.UseConfiguration(builder.Configuration);
+});
 
 builder.Services.AddExceptionHandler<DefaultExceptionHandler>();
 builder.Services.AddProblemDetails(options =>

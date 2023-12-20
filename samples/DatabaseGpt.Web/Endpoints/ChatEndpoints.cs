@@ -21,11 +21,6 @@ public class ChatEndpoints : IEndpointRouteHandlerBuilder
             .WithName("AskStream")
             .ProducesValidationProblem()
             .WithOpenApi();
-
-        chatGroupApi.MapDelete("{conversationId:guid}", DeleteAsync)
-            .WithName("DeleteConversation")
-            .Produces(StatusCodes.Status204NoContent)
-            .WithOpenApi();
     }
 
     public static async Task<IResult> AskAsync(ChatRequest request, IChatService chatService, HttpContext httpContext)
@@ -51,13 +46,5 @@ public class ChatEndpoints : IEndpointRouteHandlerBuilder
         }
 
         return Stream();
-    }
-
-    public static async Task<IResult> DeleteAsync(Guid conversationId, IChatService chatService, HttpContext httpContext)
-    {
-        var result = await chatService.DeleteAsync(conversationId);
-
-        var response = httpContext.CreateResponse(result);
-        return response;
     }
 }
