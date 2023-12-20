@@ -8,19 +8,15 @@ using Npgsql;
 
 namespace DatabaseGpt.Npgsql;
 
-public class NpgsqlDatabaseGptProvider : IDatabaseGptProvider
+public class NpgsqlDatabaseGptProvider(NpgsqlDatabaseGptProviderConfiguration settings) : IDatabaseGptProvider
 {
-    private readonly NpgsqlConnection connection;
+    private readonly NpgsqlConnection connection = new(settings.ConnectionString);
+
     private bool disposedValue;
 
     public string Name => "PostgreSQL";
 
     public string Language => "PL/pgSQL";
-
-    public NpgsqlDatabaseGptProvider(NpgsqlDatabaseGptProviderConfiguration settings)
-    {
-        connection = new NpgsqlConnection(settings.ConnectionString);
-    }
 
     public async Task<IEnumerable<string>> GetTablesAsync(IEnumerable<string> includedTables, IEnumerable<string> excludedTables)
     {
@@ -109,10 +105,5 @@ public class NpgsqlDatabaseGptProvider : IDatabaseGptProvider
     }
 
     private void ThrowIfDisposed()
-    {
-        if (disposedValue)
-        {
-            throw new ObjectDisposedException(GetType().FullName);
-        }
-    }
+        => ObjectDisposedException.ThrowIf(disposedValue, this);
 }

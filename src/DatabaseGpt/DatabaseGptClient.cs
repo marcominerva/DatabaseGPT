@@ -1,5 +1,6 @@
 ﻿using System.Data.Common;
 using ChatGptNet;
+using ChatGptNet.Extensions;
 using DatabaseGpt.Abstractions;
 using DatabaseGpt.Exceptions;
 using DatabaseGpt.Models;
@@ -9,25 +10,12 @@ using Polly.Registry;
 
 namespace DatabaseGpt;
 
-internal class DatabaseGptClient : IDatabaseGptClient
+internal class DatabaseGptClient(IChatGptClient chatGptClient, ResiliencePipelineProvider<string> pipelineProvider, IServiceProvider serviceProvider, DatabaseGptSettings databaseGptSettings) : IDatabaseGptClient
 {
-    private readonly IChatGptClient chatGptClient;
-    private readonly IDatabaseGptProvider provider;
-    private readonly IServiceProvider serviceProvider;
-    private readonly ResiliencePipeline pipeline;
-    private readonly DatabaseGptSettings databaseGptSettings;
+    private readonly IDatabaseGptProvider provider = databaseGptSettings.CreateProvider();
+    private readonly ResiliencePipeline pipeline = pipelineProvider.GetPipeline(nameof(DatabaseGptClient));
 
     private bool disposedValue;
-
-    public DatabaseGptClient(IChatGptClient chatGptClient, ResiliencePipelineProvider<string> pipelineProvider, IServiceProvider serviceProvider, DatabaseGptSettings databaseGptSettings)
-    {
-        this.chatGptClient = chatGptClient;
-        this.serviceProvider = serviceProvider;
-        this.databaseGptSettings = databaseGptSettings;
-
-        provider = databaseGptSettings.CreateProvider();
-        pipeline = pipelineProvider.GetPipeline(nameof(DatabaseGptClient));
-    }
 
     public async Task<DbDataReader> ExecuteNaturalLanguageQueryAsync(Guid sessionId, string question, NaturalLanguageQueryOptions? options = null, CancellationToken cancellationToken = default)
     {
@@ -138,10 +126,5 @@ internal class DatabaseGptClient : IDatabaseGptClient
     }
 
     private void ThrowIfDisposed()
-    {
-        if (disposedValue)
-        {
-            throw new ObjectDisposedException(GetType().FullName);
-        }
-    }
+        => ObjectDisposedException.ThrowIf(disposedValue, this);
 }

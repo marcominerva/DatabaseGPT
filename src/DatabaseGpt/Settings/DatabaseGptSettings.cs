@@ -8,11 +8,11 @@ public class DatabaseGptSettings : IDatabaseGptSettings
 
     public string? SystemMessage { get; set; }
 
-    public string[] IncludedTables { get; set; } = Array.Empty<string>();
+    public string[] IncludedTables { get; set; } = [];
 
-    public string[] ExcludedTables { get; set; } = Array.Empty<string>();
+    public string[] ExcludedTables { get; set; } = [];
 
-    public string[] ExcludedColumns { get; set; } = Array.Empty<string>();
+    public string[] ExcludedColumns { get; set; } = [];
 
     public int MaxRetries { get; set; } = 3;
 

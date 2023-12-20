@@ -1,14 +1,8 @@
 ﻿namespace DatabaseGpt.Models;
 
-public abstract class CallbackArguments
+public abstract class CallbackArguments(Guid sessionId, string question)
 {
-    public Guid SessionId { get; }
+    public Guid SessionId { get; } = sessionId;
 
-    public string Question { get; }
-
-    public CallbackArguments(Guid sessionId, string question)
-    {
-        SessionId = sessionId;
-        Question = question;
-    }
+    public string Question { get; } = question;
 }

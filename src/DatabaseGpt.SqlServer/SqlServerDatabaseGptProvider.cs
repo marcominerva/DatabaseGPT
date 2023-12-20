@@ -9,19 +9,15 @@ using Microsoft.Data.SqlClient;
 
 namespace DatabaseGpt.SqlServer;
 
-public class SqlServerDatabaseGptProvider : IDatabaseGptProvider
+public class SqlServerDatabaseGptProvider(SqlServerDatabaseGptProviderConfiguration settings) : IDatabaseGptProvider
 {
-    private readonly SqlConnection connection;
+    private readonly SqlConnection connection = new(settings.ConnectionString);
+
     private bool disposedValue;
 
     public string Name => "SQL Server";
 
     public string Language => "T-SQL";
-
-    public SqlServerDatabaseGptProvider(SqlServerDatabaseGptProviderConfiguration settings)
-    {
-        connection = new SqlConnection(settings.ConnectionString);
-    }
 
     public async Task<IEnumerable<string>> GetTablesAsync(IEnumerable<string> includedTables, IEnumerable<string> excludedTables)
     {
@@ -146,10 +142,5 @@ public class SqlServerDatabaseGptProvider : IDatabaseGptProvider
     }
 
     private void ThrowIfDisposed()
-    {
-        if (disposedValue)
-        {
-            throw new ObjectDisposedException(GetType().FullName);
-        }
-    }
+        => ObjectDisposedException.ThrowIf(disposedValue, this);
 }

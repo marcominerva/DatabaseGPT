@@ -7,17 +7,8 @@ using Spectre.Console;
 
 namespace DatabaseGptConsole;
 
-internal class Application
+internal class Application(IDatabaseGptClient databaseGptClient, DatabaseGptSettings databaseSettings)
 {
-    private readonly IDatabaseGptClient databaseGptClient;
-    private readonly DatabaseGptSettings databaseSettings;
-
-    public Application(IDatabaseGptClient databaseGptClient, DatabaseGptSettings databaseSettings)
-    {
-        this.databaseGptClient = databaseGptClient;
-        this.databaseSettings = databaseSettings;
-    }
-
     public async Task ExecuteAsync()
     {
         AnsiConsole.Write(new FigletText("DatabaseGPT").LeftJustified());
