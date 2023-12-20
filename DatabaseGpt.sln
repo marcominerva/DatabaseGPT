@@ -20,6 +20,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DatabaseGpt.SqlServer", "sr
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DatabaseGpt.Npgsql", "src\DatabaseGpt.Npgsql\DatabaseGpt.Npgsql.csproj", "{A44B2026-201D-4B9A-B43C-82F6687561A5}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DatabaseGpt.Web", "samples\DatabaseGpt.Web\DatabaseGpt.Web.csproj", "{C2769772-57CA-41EB-86EB-54DA07F560AE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -46,12 +48,17 @@ Global
 		{A44B2026-201D-4B9A-B43C-82F6687561A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A44B2026-201D-4B9A-B43C-82F6687561A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A44B2026-201D-4B9A-B43C-82F6687561A5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C2769772-57CA-41EB-86EB-54DA07F560AE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C2769772-57CA-41EB-86EB-54DA07F560AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C2769772-57CA-41EB-86EB-54DA07F560AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C2769772-57CA-41EB-86EB-54DA07F560AE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{257E0898-917F-4134-B31F-ABF95D4248E5} = {38E097CA-19CD-4B33-9038-BCDF9E02AE37}
+		{C2769772-57CA-41EB-86EB-54DA07F560AE} = {38E097CA-19CD-4B33-9038-BCDF9E02AE37}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3CD62F01-A1CB-4AD9-93D9-F9936BC2F474}

@@ -1,0 +1,16 @@
+﻿@page
+
+@{
+    ViewData["Title"] = "Error";
+}
+
+<div class="d-flex align-items-center justify-content-center">
+    <div class="text-center">
+        <h1 class="display-1 fw-bold">500</h1>
+        <p class="fs-3"><span class="text-danger">Ops!</span> Unexpected error.</p>
+        <p class="lead">
+            There was an unexpected error while trying to load the page. Please, try again later.
+        </p>
+        <a title="Go to Home Page" asp-page="../Index" class="btn btn-primary"><i class="bi bi-house-door-fill"></i> Go to Home Page</a>
+    </div>
+</div>

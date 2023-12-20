@@ -1,0 +1,101 @@
+﻿@using System.Reflection;
+
+@inject IWebHostEnvironment environment
+
+@{
+    var assembly = Assembly.GetExecutingAssembly();
+    var version = assembly.GetAttribute<BuildDateTimeAttribute>(a => a.DateTime.ToString("yyyyMMdd.HHmm"));
+    var author = assembly.GetAttribute<AssemblyCompanyAttribute>(a => a.Company);
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@($"{ViewData["Title"]} - {environment.ApplicationName}".Trim().TrimStart('-').Trim())</title>
+
+    <partial name="_Favicons" />
+    <partial name="_OpenGraph" />
+
+    <link rel="stylesheet" href="~/lib/bootstrap/css/bootstrap.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.min.css" asp-append-version="true" />
+
+    <script src="~/lib/alpinejs/persist/dist/cdn.min.js" asp-append-version="true" defer></script>    
+    <script src="~/lib/alpinejs/cdn.min.js" asp-append-version="true" defer></script>
+
+    <script src="~/lib/marked/marked.min.js" asp-append-version="true"></script>
+
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+
+    @await RenderSectionAsync("Head", required: false)
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+            <div class="container">
+                <a class="navbar-brand" asp-page="/Index">
+                    <img class="d-inline-block align-middle" src="~/favicon-32x32.png" alt="@environment.ApplicationName">
+                    @environment.ApplicationName
+                </a>                
+            </div>
+        </nav>
+    </header>
+
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer">
+        <div class="container text-body-secondary">
+            <div class="row d-flex flex-wrap justify-content-between align-items-center">
+                <div class="align-items-center col d-flex align-items-center">
+                    &copy; @author
+                    <span class="d-none d-lg-block">
+                        <a class="nav-link nav-link-bottom ps-3" title="Facebook" href="https://facebook.com/marcominerva" target="_blank"><i class="bi bi-facebook"></i></a>
+                    </span>
+                    <a class="nav-link nav-link-bottom ps-3" title="LinkedIn" href="https://www.linkedin.com/in/marcominerva" target="_blank"><i class="bi bi-linkedin"></i></a>
+                    <a class="nav-link nav-link-bottom ps-3" title="X" href="https://twitter.com/marcominerva" target="_blank"><i class="bi bi-twitter-x"></i></a>
+                    <a class="nav-link nav-link-bottom ps-3" title="GitHub" href="https://github.com/marcominerva" target="_blank"><i class="bi bi-github"></i></a>
+                    <a class="nav-link nav-link-bottom ps-3" title="YouTube" href="https://www.youtube.com/marcominerva" target="_blank"><i class="bi bi-youtube"></i></a>
+                    <a class="nav-link nav-link-bottom ps-3" title="Twitch" href="https://www.twitch.tv/marcominerva" target="_blank"><i class="bi bi-twitch"></i></a>
+                </div>
+                <div class="nav col justify-content-end d-flex align-items-center">
+                    <small>@version</small>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/jquery.min.js" asp-append-version="true"></script>
+    <script src="~/lib/bootstrap/js/bootstrap.bundle.min.js" asp-append-version="true"></script>
+
+    <script src="~/js/app.js" asp-append-version="true"></script>
+    <script src="~/js/chat.js" asp-append-version="true"></script>
+
+    <script>
+        $(document).ready(function () {
+            const renderer = new marked.Renderer();
+            const linkRenderer = renderer.link;
+            renderer.link = (href, title, text) => {
+                const localLink = href.startsWith(`${location.protocol}//${location.hostname}`);
+                const html = linkRenderer.call(renderer, href, title, text);
+                return localLink ? html : html.replace(/^<a /, `<a target="_blank" rel="noreferrer noopener nofollow" `);
+            };
+
+            marked.use({
+                mangle: false,
+                headerIds: false,
+                renderer: renderer
+            });
+
+            const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+            const tooltipList = [...tooltipTriggerList].map(element => new bootstrap.Tooltip(element))
+        });
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
