@@ -1,3 +1,5 @@
-﻿namespace DatabaseGpt.Web.Models;
+﻿using DatabaseGpt.Web.Models.Enums;
 
-public record class ChatRequest(Guid ConversationId, string Message);
+namespace DatabaseGpt.Web.Models;
+
+public record class ChatRequest(Guid ConversationId, string Message, ResponseType ResponseType);

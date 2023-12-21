@@ -63,15 +63,24 @@ input[type="checkbox"] + label {
     cursor: pointer;
 }
 
+table {
+    border-collapse: collapse;
+}
+
+th, td {
+    border: 1px solid #000;
+    padding: 5px;
+}
+
 .card-body
 {
     overflow: auto;
-    height: 490px;
+    height: 480px;
 }
 
 @media (min-width: 768px) {
     .card-body {
-        height: 595px;
+        height: 585px;
     }
 }
 

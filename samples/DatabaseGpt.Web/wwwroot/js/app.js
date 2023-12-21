@@ -4,8 +4,8 @@
     );
 }
 
-async function ask(conversationId, message) {
-    const request = { conversationId: conversationId, message: message }
+async function ask(conversationId, message, responseType) {
+    const request = { conversationId: conversationId, message: message, responseType: responseType }
     const response = await fetch('/api/chat/ask', {
         method: "POST",
         headers: {

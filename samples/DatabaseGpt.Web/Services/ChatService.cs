@@ -1,29 +1,83 @@
-﻿using ChatGptNet;
-using ChatGptNet.Extensions;
+﻿using System.Data;
+using System.Data.Common;
+using System.Text;
 using DatabaseGpt.Web.Models;
+using DatabaseGpt.Web.Models.Enums;
 using DatabaseGpt.Web.Services.Interfaces;
 using OperationResults;
 
 namespace DatabaseGpt.Web.Services;
 
-public class ChatService(IDatabaseGptClient databaseGptClient, IChatGptClient chatGptClient) : IChatService
+public class ChatService(IDatabaseGptClient databaseGptClient) : IChatService
 {
-    private const string ContentFilteredMessage = "***** (The response was filtered by the content filtering system. Please modify your prompt and retry. To learn more about content filtering policies please read the documentation: https://go.microsoft.com/fwlink/?linkid=2198766)";
-
-    public async Task<Result<ChatResponse>> AskQueryAsync(ChatRequest request)
+    public async Task<Result<ChatResponse>> AskAsync(ChatRequest request)
     {
-        var response = await databaseGptClient.GetNaturalLanguageQueryAsync(request.ConversationId, request.Message);
+        string response = null;
+        if (request.ResponseType == ResponseType.Table)
+        {
+            using var reader = await databaseGptClient.ExecuteNaturalLanguageQueryAsync(request.ConversationId, request.Message);
+            response = GetMarkdownTable(reader);
+        }
+        else
+        {
+            // Just gets the SQL query, not the table.
+            response = await databaseGptClient.GetNaturalLanguageQueryAsync(request.ConversationId, request.Message);
+            response = response.Replace("\r\n", "<br />").Replace("\n", "<br />");
+        }
+
         return new ChatResponse(response);
     }
 
-    public async IAsyncEnumerable<string> AskStreamAsync(ChatRequest request)
+    public static string GetMarkdownTable(DbDataReader reader)
     {
-        var responseStream = chatGptClient.AskStreamAsync(request.ConversationId, request.Message);
+        var columns = GetColumnNames(reader).ToArray();
+        var header = $"|{string.Join('|', columns)}|";
 
-        await foreach (var response in responseStream)
+        var fieldTypes = GetFieldTypes(reader).ToArray();
+        var rowSeparators = $"{string.Concat(fieldTypes.Select(t => t == typeof(string) || t == typeof(Guid) || t == typeof(Guid?) ? "|----" : "|----:"))}|";
+
+        var values = new StringBuilder();
+        while (reader.Read())
         {
-            var message = !response.IsContentFiltered ? response.GetContent() : ContentFilteredMessage;
-            yield return message;
+            for (var i = 0; i < reader.FieldCount; i++)
+            {
+                var value = GetValue(reader, i);
+                values.Append('|').Append(value);
+            }
+
+            values.AppendLine("|");
+        }
+
+        var table = $"{header}{Environment.NewLine}{rowSeparators}{Environment.NewLine}{values}";
+        return table;
+
+        static IEnumerable<string> GetColumnNames(IDataReader reader)
+        {
+            for (var i = 0; i < reader.FieldCount; i++)
+            {
+                yield return reader.GetName(i);
+            }
+        }
+
+        static IEnumerable<Type> GetFieldTypes(IDataReader reader)
+        {
+            for (var i = 0; i < reader.FieldCount; i++)
+            {
+                yield return reader.GetFieldType(i);
+            }
+        }
+
+        static string GetValue(DbDataReader reader, int index)
+        {
+            var dataType = reader.GetDataTypeName(index);
+            var value = dataType switch
+            {
+                "date" when reader.GetValue(index) != DBNull.Value => reader.GetFieldValue<DateOnly>(index).ToString(),
+                "time" when reader.GetValue(index) != DBNull.Value => reader.GetFieldValue<TimeOnly>(index).ToString(),
+                _ => reader[index]?.ToString()
+            };
+
+            return value;
         }
     }
 }

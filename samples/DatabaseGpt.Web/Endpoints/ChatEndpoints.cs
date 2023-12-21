@@ -16,35 +16,13 @@ public class ChatEndpoints : IEndpointRouteHandlerBuilder
             .Produces<ChatResponse>()
             .ProducesValidationProblem()
             .WithOpenApi();
-
-        chatGroupApi.MapPost("stream", StreamAsync)
-            .WithName("AskStream")
-            .ProducesValidationProblem()
-            .WithOpenApi();
     }
 
     public static async Task<IResult> AskAsync(ChatRequest request, IChatService chatService, HttpContext httpContext)
     {
-        var result = await chatService.AskQueryAsync(request);
+        var result = await chatService.AskAsync(request);
 
         var response = httpContext.CreateResponse(result);
         return response;
-    }
-
-    public static IAsyncEnumerable<string> StreamAsync(ChatRequest request, IChatService chatService, HttpContext httpContext)
-    {
-        async IAsyncEnumerable<string> Stream()
-        {
-            // Requests a streaming response.
-            var responseStream = chatService.AskStreamAsync(request);
-
-            await foreach (var delta in responseStream)
-            {
-                yield return delta;
-                await Task.Delay(100);
-            }
-        }
-
-        return Stream();
     }
 }

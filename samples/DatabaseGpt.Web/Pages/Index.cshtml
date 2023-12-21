@@ -62,7 +62,7 @@
         </div>
 
         <div class="card-footer bg-white w-100 bottom-0 m-0 p-1">
-            <form x-on:submit.prevent x-data="{ responseStreaming: true }">
+            <form x-on:submit.prevent x-data="{ responseType: 'table' }">
                 <div class="input-group">
                     <span class="input-group-text bg-transparent border-0">
                         <i class="d-flex bi bi-info-circle text-body-secondary" x-init="$nextTick(() => new bootstrap.Tooltip($el))"
@@ -71,7 +71,7 @@
                     </span>
                     <input type="text" x-model="message" class="form-control border-0" placeholder="Ask me anything..." aria-label="Ask me anything about the document" maxlength="2000" autofocus>
                     <div class="input-group-text bg-transparent border-0">
-                        <button type="submit" class="btn btn-primary" x-on:click="responseStreaming ? askStreaming(): askDirect()" x-bind:disabled="message.trim().length == 0 || isAsking">
+                        <button type="submit" class="btn btn-primary" x-on:click="askDirect(responseType)" x-bind:disabled="message.trim().length == 0 || isAsking">
                             <i class="bi bi-send"></i>
                         </button>
                         <button type="button" class="btn btn-primary ms-2" x-on:click="reset()" x-bind:disabled="isAsking">
@@ -79,20 +79,21 @@
                         </button>
                     </div>
                 </div>
-                <div class="form-check form-switch text-end me-3">
-                    <input class="form-check-input" style="float:none" type="checkbox" role="switch" id="enableResponseStreaming" x-model="responseStreaming">
-                    <label class="form-check-label" for="enableResponseStreaming">
-                        Enable Response Streaming
-                    </label>
+                <div class="text-end me-3">
+                    <label for="responseType" class="col-form-label">Response type</label>
+                    <select class="form-select" style="width: auto; display: inline-table;" id="responseType" x-model="responseType">
+                        <option value="Table">Table</option>
+                        <option value="Query">Query</option>
+                    </select>
                 </div>
             </form>
         </div>
     </div>
-   
+
 </div>
 
 @section Scripts
-    {
+{
     <script>
         document.addEventListener("alpine:init", chat);
     </script>
