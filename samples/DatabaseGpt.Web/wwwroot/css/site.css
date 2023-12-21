@@ -63,17 +63,34 @@ input[type="checkbox"] + label {
     cursor: pointer;
 }
 
-table {
-    border-collapse: collapse;
+.card table {
+    border-style: hidden;
+    margin: 8px;
 }
 
-th, td {
-    border: 1px solid #000;
-    padding: 5px;
-}
+    .card table tr, .card table th {
+        border: 1px solid #ddd;
+        padding: 10px;
+    }
 
-.card-body
-{
+        .card table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        .card table tr:hover {
+            background-color: #ddd;
+        }
+
+    .card table td {
+        border-width: 1px;
+        padding: 8px;
+    }
+
+        .card table td[align="right"] {
+            text-align: right;
+        }
+
+.card-body {
     overflow: auto;
     height: 480px;
 }

@@ -63,9 +63,15 @@ internal class DatabaseGptClient(IChatGptClient chatGptClient, ResiliencePipelin
                 You are an assistant that answers questions using the information stored in a {provider.Name} database and the {provider.Language} language.
                 Your answers can only reference one or more of the following tables: '{string.Join(',', tables)}'.
                 You can create only {provider.Language} SELECT queries. Never create INSERT, UPDATE nor DELETE command.
-                When you create a {provider.Language} query, consider the following information:
-                {databaseGptSettings.SystemMessage}
                 """;
+
+            if (!string.IsNullOrWhiteSpace(databaseGptSettings.SystemMessage))
+            {
+                systemMessage += $"""
+                    When you create a {provider.Language} query, consider the following information:
+                    {databaseGptSettings.SystemMessage}
+                    """;
+            }
 
             sessionId = await chatGptClient.SetupAsync(sessionId, systemMessage, cancellationToken);
         }
