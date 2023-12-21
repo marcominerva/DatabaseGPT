@@ -1,7 +1,7 @@
 # DatabaseGPT
 
 [![Lint Code Base](https://github.com/marcominerva/DatabaseGPT/actions/workflows/linter.yml/badge.svg)](https://github.com/marcominerva/DatabaseGPT/actions/workflows/linter.yml)
-[![CodeQL](https://github.com/marcominerva/DatabaseGPT/actions/workflows/codeql.yml/badge.svg)](https://github.com/marcominerva/DatabaseGPT/actions/workflows/codeql.yml)
+[![CodeQL](https://github.com/marcominerva/DatabaseGPT/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/marcominerva/DatabaseGPT/actions/workflows/github-code-scanning/codeql)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/marcominerva/TinyHelpers/blob/master/LICENSE)
 
 Query a database using natural language.
