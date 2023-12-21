@@ -7,17 +7,8 @@ using Spectre.Console;
 
 namespace DatabaseGptConsole;
 
-internal class Application
+internal class Application(IDatabaseGptClient databaseGptClient, DatabaseGptSettings databaseSettings)
 {
-    private readonly IDatabaseGptClient databaseGptClient;
-    private readonly DatabaseGptSettings databaseSettings;
-
-    public Application(IDatabaseGptClient databaseGptClient, DatabaseGptSettings databaseSettings)
-    {
-        this.databaseGptClient = databaseGptClient;
-        this.databaseSettings = databaseSettings;
-    }
-
     public async Task ExecuteAsync()
     {
         AnsiConsole.Write(new FigletText("DatabaseGPT").LeftJustified());
@@ -57,7 +48,7 @@ internal class Application
                 AnsiConsole.WriteLine("The query to answer the question should be the following:");
 
                 AnsiConsole.WriteLine();
-                AnsiConsole.WriteLine(args.Sql);
+                AnsiConsole.WriteLine(args.Query);
                 AnsiConsole.WriteLine();
 
                 return default;

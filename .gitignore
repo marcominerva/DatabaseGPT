@@ -397,5 +397,5 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 
-/src/DatabaseGptConsole/appsettings.local.json
 /samples/DatabaseGptConsole/appsettings.local.json
+/samples/DatabaseGpt.Web/appsettings.local.json

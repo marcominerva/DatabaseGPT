@@ -24,7 +24,7 @@ public static class DatabaseGptServiceCollectionExtensions
 
         services.AddChatGpt(configureChatGpt);
 
-        services.AddResiliencePipeline(nameof(DatabaseGptClient), (builder) =>
+        services.AddResiliencePipeline(nameof(DatabaseGptClient), builder =>
         {
             builder.AddRetry(new RetryStrategyOptions
             {

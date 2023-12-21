@@ -1,12 +1,6 @@
 ﻿namespace DatabaseGpt.Models;
 
-public class OnQueryGeneratedArguments : OnCandidateTablesFoundArguments
+public class OnQueryGeneratedArguments(Guid sessionId, string question, IEnumerable<string> tables, string query) : OnCandidateTablesFoundArguments(sessionId, question, tables)
 {
-    public string Sql { get; }
-
-    public OnQueryGeneratedArguments(Guid sessionId, string question, IEnumerable<string> tables, string sql)
-        : base(sessionId, question, tables)
-    {
-        Sql = sql;
-    }
+    public string Query { get; } = query;
 }

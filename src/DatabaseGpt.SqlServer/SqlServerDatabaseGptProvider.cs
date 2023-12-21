@@ -4,39 +4,40 @@ using System.Text;
 using Dapper;
 using DatabaseGpt.Abstractions;
 using DatabaseGpt.Abstractions.Exceptions;
+using DatabaseGpt.SqlServer.Models;
 using Microsoft.Data.SqlClient;
 
 namespace DatabaseGpt.SqlServer;
 
-public class SqlServerDatabaseGptProvider : IDatabaseGptProvider
+public class SqlServerDatabaseGptProvider(SqlServerDatabaseGptProviderConfiguration settings) : IDatabaseGptProvider
 {
-    private readonly SqlConnection connection;
+    private readonly SqlConnection connection = new(settings.ConnectionString);
+
     private bool disposedValue;
 
     public string Name => "SQL Server";
 
     public string Language => "T-SQL";
 
-    public SqlServerDatabaseGptProvider(SqlServerDatabaseGptProviderConfiguration settings)
-    {
-        connection = new SqlConnection(settings.ConnectionString);
-    }
-
     public async Task<IEnumerable<string>> GetTablesAsync(IEnumerable<string> includedTables, IEnumerable<string> excludedTables)
     {
         ThrowIfDisposed();
 
-        var tables = await connection.QueryAsync<string>("SELECT TABLE_SCHEMA + '.' + TABLE_NAME AS Tables FROM INFORMATION_SCHEMA.TABLES;");
+        var query = "SELECT TABLE_SCHEMA + '.' + TABLE_NAME AS Tables FROM INFORMATION_SCHEMA.TABLES";
+        IEnumerable<string>? tablesToQuery = null;
 
         if (includedTables?.Any() ?? false)
         {
-            tables = tables.Where(t => includedTables.Contains(t, StringComparer.InvariantCultureIgnoreCase));
+            query = $"{query} WHERE TABLE_SCHEMA + '.' + TABLE_NAME IN @tables";
+            tablesToQuery = includedTables;
         }
         else if (excludedTables?.Any() ?? false)
         {
-            tables = tables.Where(t => !excludedTables.Contains(t, StringComparer.InvariantCultureIgnoreCase));
+            query = $"{query} WHERE TABLE_SCHEMA + '.' + TABLE_NAME NOT IN @tables";
+            tablesToQuery = excludedTables;
         }
 
+        var tables = await connection.QueryAsync<string>(query, new { tables = tablesToQuery });
         return tables;
     }
 
@@ -56,23 +57,55 @@ public class SqlServerDatabaseGptProvider : IDatabaseGptProvider
         foreach (var table in splittedTableNames)
         {
             var query = $"""
-                SELECT STUFF(
-                	(SELECT ',' + '[' + COLUMN_NAME + '] ' + 
-                	    UPPER(DATA_TYPE) + ISNULL('(' + IIF(CHARACTER_MAXIMUM_LENGTH = -1, 'MAX', CAST(CHARACTER_MAXIMUM_LENGTH AS VARCHAR(10))) + ')','') + ' ' + 
-                	    CASE WHEN IS_NULLABLE = 'YES' THEN 'NULL' ELSE 'NOT NULL' END
-                	FROM
-                        INFORMATION_SCHEMA.COLUMNS
-                	WHERE
-                        TABLE_SCHEMA = @schema AND TABLE_NAME = @table AND COLUMN_NAME NOT IN @excludedColumns
-                	FOR XML PATH('')), 1, 1, ''
-                );
+                SELECT TABLE_SCHEMA AS [SCHEMA], TABLE_NAME AS [TABLE], COLUMN_NAME AS [COLUMN],
+                    UPPER(DATA_TYPE) + ISNULL('(' + IIF(CHARACTER_MAXIMUM_LENGTH = -1, 'MAX', CAST(CHARACTER_MAXIMUM_LENGTH AS VARCHAR(10))) + ')','') + ' ' + 
+                    CASE WHEN IS_NULLABLE = 'YES' THEN 'NULL' ELSE 'NOT NULL' END AS DESCRIPTION
+                FROM
+                    INFORMATION_SCHEMA.COLUMNS
+                WHERE
+                    TABLE_SCHEMA = @schema AND TABLE_NAME = @table
                 """;
 
-            var columns = await connection.QueryFirstAsync<string>(query, new { schema = table.Schema, table = table.Name, ExcludedColumns = excludedColumns });
-            result.AppendLine($"CREATE TABLE [{table.Schema}].[{table.Name}] ({columns});");
+            var allColumns = await connection.QueryAsync<ColumnEntity>(query, new { schema = table.Schema, table = table.Name });
+
+            var columns = allColumns.Where(c => IsIncluded(c, excludedColumns))
+                .Select(c => $"{c.Column} {c.Description}").ToList();
+
+            result.AppendLine($"CREATE TABLE [{table.Schema}].[{table.Name}] ({string.Join(',', columns)});");
         }
 
         return result.ToString();
+
+        static bool IsIncluded(ColumnEntity column, IEnumerable<string> excludedColumns)
+        {
+            // Checks if the column should be included or not, verifying if it is present in the list of excluded columns.
+            var isIncluded = excludedColumns.All(e =>
+            {
+                var parts = e.Split('.');
+                var schemaOrColumnName = parts.ElementAtOrDefault(0)?.Trim();
+                var tableName = parts.ElementAtOrDefault(1)?.Trim();
+                var columnName = parts.ElementAtOrDefault(2)?.Trim();
+
+                if (string.IsNullOrWhiteSpace(columnName))
+                {
+                    // The columnName variable is null: it means that the excluded column has been specified without the full qualified name.
+                    // In this case, the schemaOrColumnName variable contains the column name and it is a column that must be excluded from all tables.
+                    var isExcluded = column.Column.Equals(schemaOrColumnName, StringComparison.OrdinalIgnoreCase);
+                    return !isExcluded;
+                }
+                else
+                {
+                    // The excluded column has been specified using the full qualified name.
+                    var isExcluded = column.Schema.Equals(schemaOrColumnName, StringComparison.OrdinalIgnoreCase)
+                       && column.Table.Equals(tableName, StringComparison.OrdinalIgnoreCase)
+                       && column.Column.Equals(columnName, StringComparison.OrdinalIgnoreCase);
+
+                    return !isExcluded;
+                }
+            });
+
+            return isIncluded;
+        }
     }
 
     public async Task<DbDataReader> ExecuteQueryAsync(string query)
@@ -109,10 +142,5 @@ public class SqlServerDatabaseGptProvider : IDatabaseGptProvider
     }
 
     private void ThrowIfDisposed()
-    {
-        if (disposedValue)
-        {
-            throw new ObjectDisposedException(GetType().FullName);
-        }
-    }
+        => ObjectDisposedException.ThrowIf(disposedValue, this);
 }

@@ -1,14 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Dapper" Version="2.1.15" />
-        <PackageReference Include="Npgsql" Version="7.0.6" />
+        <PackageReference Include="Dapper" Version="2.1.24" />
+        <PackageReference Include="Npgsql" Version="8.0.1" />
     </ItemGroup>
 
     <ItemGroup>

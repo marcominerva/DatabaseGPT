@@ -1,0 +1,18 @@
+﻿@using DatabaseGpt.Web.Settings;
+@using Microsoft.AspNetCore.Http.Extensions;
+@using Microsoft.Extensions.Options;
+
+@inject IWebHostEnvironment environment
+@inject IOptions<AppSettings> appSettingsOptions;
+
+<meta property="og:site_name" content="@environment.ApplicationName" />
+<meta property="og:title" content="@environment.ApplicationName" />
+<meta property="og:description" content="@appSettingsOptions.Value.ApplicationDescription" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="@Context.Request.GetEncodedUrl()" />
+<meta property="og:image" content="/android-chrome-512x512.png" />
+<meta property="og:image:width" content="240" />
+<meta property="og:image:height" content="240" />
+<meta property="og:image:alt" content="@environment.ApplicationName" />
+<meta property="og:locale" content="en_US" />
+<meta name="thumbnail" content="/android-chrome-512x512.png" />

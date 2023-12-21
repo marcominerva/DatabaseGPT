@@ -1,0 +1,100 @@
+﻿@page
+@model IndexModel
+
+<div x-data="chat">
+
+    <div class="card mx-auto">
+        <div class="card-body">
+
+            <template x-for="message in messages">
+                <div>
+                    <template x-if="message.role == 'user'">
+                        <div class="d-flex align-items-baseline text-end justify-content-end">
+                            <div class="pe-2">
+                                <div>
+                                    <div class="card card-text d-inline-block p-2 px-3 m-1" x-text="message.text"></div>
+                                </div>
+                            </div>
+                            <div class="position-relative avatar">
+                                <img src="~/images/user.png" class="img-fluid rounded-circle" alt="">
+                            </div>
+                        </div>
+                    </template>
+
+                    <template x-if="message.role == 'assistant' || message.role == 'function'">
+                        <div class="d-flex align-items-baseline">
+                            <div class="position-relative avatar">
+                                <img src="~/images/assistant.png" class="img-fluid rounded-circle" alt="">
+                            </div>
+                            <div class="pe-2">
+                                <div>
+                                    <template x-if="!message.text">
+                                        <div class="card card-text d-inline-block p-3 px-3 m-1">
+                                            <div class="progress-chat" role="progressbar" aria-label="I'm thinking" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                                <div class="progress-bar-chat">
+                                                    <div class="progress-bar-indeterminate"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+
+                                    <template x-if="message.text">
+                                        <div class="card card-text d-inline-block p-2 px-3 m-1">
+                                            <div x-html="marked.parse(message.text)"></div>
+                                            <div x-cloak class="text-end bg-transparent border-0" x-show="message.isCompleted">
+                                                <button type="button" class="btn-clipboard" aria-label="Copy to clipboard" x-init="$nextTick(() => new bootstrap.Tooltip($el))"
+                                                        data-bs-toggle="tooltip" data-bs-html="true"
+                                                        data-bs-title="Copy to clipboard" x-on:click="copyToClipboard($el, message.text)">
+                                                    <i class="bi bi-clipboard"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                </div>
+            </template>
+
+            <div x-ref="chat" x-init="$watch('messages', value => setTimeout(() => $refs.chat.scrollIntoView(), 1))"></div>
+        </div>
+
+        <div class="card-footer bg-white w-100 bottom-0 m-0 p-1">
+            <form x-on:submit.prevent x-data="{ responseType: 'table' }">
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-0">
+                        <i class="d-flex bi bi-info-circle text-body-secondary" x-init="$nextTick(() => new bootstrap.Tooltip($el))"
+                           data-bs-toggle="tooltip" data-bs-html="true"
+                           data-bs-title="Messages aren't stored in any way on either the client or the server."></i>
+                    </span>
+                    <input type="text" x-model="message" class="form-control border-0" placeholder="Ask me anything..." aria-label="Ask me anything about the document" maxlength="2000" autofocus>
+                    <div class="input-group-text bg-transparent border-0">
+                        <button type="submit" class="btn btn-primary" x-on:click="askDirect(responseType)" x-bind:disabled="message.trim().length == 0 || isAsking">
+                            <i class="bi bi-send"></i>
+                        </button>
+                        <button type="button" class="btn btn-primary ms-2" x-on:click="reset()" x-bind:disabled="isAsking">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="text-end me-3">
+                    <label for="responseType" class="col-form-label">Response type</label>
+                    <select class="form-select" style="width: auto; display: inline-table;" id="responseType" x-model="responseType">
+                        <option value="Table">Table</option>
+                        <option value="Query">Query</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts
+{
+    <script>
+        document.addEventListener("alpine:init", chat);
+    </script>
+}
