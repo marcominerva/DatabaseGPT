@@ -8,9 +8,13 @@ public interface IDatabaseGptProvider : IDisposable
 
     string Language { get; }
 
-    Task<IEnumerable<string>> GetTablesAsync(IEnumerable<string> includedTables, IEnumerable<string> excludedTables);
+    Task<string?> GetQueryHintsAsync(CancellationToken cancellationToken = default);
 
-    Task<string> GetCreateTablesScriptAsync(IEnumerable<string> tables, IEnumerable<string> excludedColumns);
+    Task<IEnumerable<string>> GetTablesAsync(IEnumerable<string> includedTables, IEnumerable<string> excludedTables, CancellationToken cancellationToken = default);
 
-    Task<DbDataReader> ExecuteQueryAsync(string query);
+    Task<string> GetCreateTablesScriptAsync(IEnumerable<string> tables, IEnumerable<string> excludedColumns, CancellationToken cancellationToken = default);
+
+    Task<string> NormalizeQueryAsync(string query, CancellationToken cancellationToken = default);
+
+    Task<DbDataReader> ExecuteQueryAsync(string query, CancellationToken cancellationToken = default);
 }

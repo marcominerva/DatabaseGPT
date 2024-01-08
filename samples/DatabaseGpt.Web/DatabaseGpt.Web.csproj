@@ -15,7 +15,7 @@
         <PackageReference Include="OperationResultTools.AspNetCore.Http" Version="1.0.17" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
         <PackageReference Include="TinyHelpers" Version="3.0.2" />
-        <PackageReference Include="TinyHelpers.AspNetCore" Version="3.0.2" />
+        <PackageReference Include="TinyHelpers.AspNetCore" Version="3.0.4" />
     </ItemGroup>
 
     <ItemGroup>

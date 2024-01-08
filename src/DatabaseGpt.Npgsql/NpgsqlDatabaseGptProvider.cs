@@ -18,7 +18,7 @@ public class NpgsqlDatabaseGptProvider(NpgsqlDatabaseGptProviderConfiguration se
 
     public string Language => "PL/pgSQL";
 
-    public async Task<IEnumerable<string>> GetTablesAsync(IEnumerable<string> includedTables, IEnumerable<string> excludedTables)
+    public async Task<IEnumerable<string>> GetTablesAsync(IEnumerable<string> includedTables, IEnumerable<string> excludedTables, CancellationToken cancellationToken = default)
     {
         ThrowIfDisposed();
 
@@ -40,7 +40,7 @@ public class NpgsqlDatabaseGptProvider(NpgsqlDatabaseGptProviderConfiguration se
         return tables;
     }
 
-    public async Task<string> GetCreateTablesScriptAsync(IEnumerable<string> tables, IEnumerable<string> excludedColumns)
+    public async Task<string> GetCreateTablesScriptAsync(IEnumerable<string> tables, IEnumerable<string> excludedColumns, CancellationToken cancellationToken = default)
     {
         ThrowIfDisposed();
 
@@ -71,7 +71,21 @@ public class NpgsqlDatabaseGptProvider(NpgsqlDatabaseGptProviderConfiguration se
         return result.ToString();
     }
 
-    public async Task<DbDataReader> ExecuteQueryAsync(string query)
+    public Task<string?> GetQueryHintsAsync(CancellationToken cancellationToken = default)
+    {
+        ThrowIfDisposed();
+
+        return Task.FromResult<string?>(null);
+    }
+
+    public Task<string> NormalizeQueryAsync(string query, CancellationToken cancellationToken = default)
+    {
+        ThrowIfDisposed();
+
+        return Task.FromResult(query);
+    }
+
+    public async Task<DbDataReader> ExecuteQueryAsync(string query, CancellationToken cancellationToken = default)
     {
         ThrowIfDisposed();
 

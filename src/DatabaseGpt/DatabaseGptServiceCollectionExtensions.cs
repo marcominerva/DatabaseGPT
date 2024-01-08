@@ -23,7 +23,12 @@ public static class DatabaseGptServiceCollectionExtensions
         services.Add(new ServiceDescriptor(typeof(IDatabaseGptClient), typeof(DatabaseGptClient), lifetime));
 
         var chatGptBuilder = services.AddChatGpt(configureChatGpt);
-        chatGptBuilder.HttpClientBuilder.AddStandardResilienceHandler();
+        chatGptBuilder.HttpClientBuilder.AddStandardResilienceHandler(options =>
+        {
+            options.AttemptTimeout.Timeout = TimeSpan.FromMinutes(1);
+            options.CircuitBreaker.SamplingDuration = TimeSpan.FromMinutes(3);
+            options.TotalRequestTimeout.Timeout = TimeSpan.FromMinutes(3);
+        });
 
         services.AddResiliencePipeline(nameof(DatabaseGptClient), builder =>
         {
