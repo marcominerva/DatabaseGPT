@@ -22,7 +22,8 @@ public static class DatabaseGptServiceCollectionExtensions
 
         services.Add(new ServiceDescriptor(typeof(IDatabaseGptClient), typeof(DatabaseGptClient), lifetime));
 
-        services.AddChatGpt(configureChatGpt);
+        var chatGptBuilder = services.AddChatGpt(configureChatGpt);
+        chatGptBuilder.HttpClientBuilder.AddStandardResilienceHandler();
 
         services.AddResiliencePipeline(nameof(DatabaseGptClient), builder =>
         {
