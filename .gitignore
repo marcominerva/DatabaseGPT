@@ -399,3 +399,4 @@ FodyWeavers.xsd
 
 /samples/DatabaseGptConsole/appsettings.local.json
 /samples/DatabaseGpt.Web/appsettings.local.json
+/samples/DatabaseGpt.Web/Properties/ServiceDependencies/databasegpt - Zip Deploy/profile.arm.json
