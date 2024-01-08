@@ -77,13 +77,13 @@ internal class DatabaseGptClient(IChatGptClient chatGptClient, ResiliencePipelin
     private async Task<IEnumerable<string>> GetTablesAsync(Guid sessionId, string question, NaturalLanguageQueryOptions? options, CancellationToken cancellationToken)
     {
         var request = $"""
-                You must answer the following question, '{question}', using a {provider.Language} query for a {provider.Name} database. Take into account also the previous messages.
+                You must answer the following question, '{question}', using a {provider.Language} query for a {provider.Name} database. Take into account the context of the chat to complete the question, adding the context from the chat.
                 From the comma separated list of tables available in the database, select those tables that might be useful in the generated {provider.Language} query.
                 The selected tables should be returned in a comma separated list. Your response should just contain the comma separated list of selected tables.
                 The table name should always contain the schema name. For example, if the table name is 'Table1' and the schema name is 'dbo', then the table name should be 'dbo.Table1'.
                 If there are no tables that might be useful, return only the string 'NONE', without any other words. You shouldn't never explain the reason why you haven't found any table.
-                If the question is unclear or you don't understand the question, or you need a clarification, then return only the string 'NONE', without any other words. 
                 """;
+        // If the question is unclear or you don't understand the question, or you need a clarification, then return only the string 'NONE', without any other words. 
 
         if (options?.OnStarting is not null)
         {
