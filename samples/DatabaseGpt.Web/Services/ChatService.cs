@@ -22,7 +22,7 @@ public class ChatService(IDatabaseGptClient databaseGptClient) : IChatService
         {
             // Just gets the SQL query, not the table.
             response = await databaseGptClient.GetNaturalLanguageQueryAsync(request.ConversationId, request.Message);
-            response = response.Replace("\r\n", "<br />").Replace("\n", "<br />");
+            response = $"<pre>{response.Replace("\r\n", "<br />").Replace("\n", "<br />")}</pre>";
         }
 
         return new ChatResponse(response);

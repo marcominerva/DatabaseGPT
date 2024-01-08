@@ -41,8 +41,7 @@ async function copyToClipboard(element, text)
     let tooltip = bootstrap.Tooltip.getInstance(element);
     tooltip.hide();
 
-    navigator.clipboard.writeText(text);
-
+    navigator.clipboard.writeText(text.replace("<pre>", "").replace("</pre>", "").replace(/<br\s*[\/]?>/gi, "\n"));
     element.setAttribute('data-bs-title', 'Copied!');
 
     tooltip = new bootstrap.Tooltip(element);

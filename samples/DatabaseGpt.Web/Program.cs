@@ -1,17 +1,16 @@
-using System.Diagnostics;
 using System.Text.Json.Serialization;
+using System.Threading.RateLimiting;
 using ChatGptNet;
 using DatabaseGpt;
-using DatabaseGpt.Web.ExceptionHandlers;
 using DatabaseGpt.Web.Extensions;
 using DatabaseGpt.Web.Services;
 using DatabaseGpt.Web.Services.Interfaces;
 using DatabaseGpt.Web.Settings;
 using DatabaseGpt.Web.Swagger;
-using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.OpenApi.Models;
 using MinimalHelpers.Routing;
 using OperationResults.AspNetCore.Http;
+using TinyHelpers.AspNetCore.ExceptionHandlers;
 using TinyHelpers.AspNetCore.Extensions;
 using TinyHelpers.AspNetCore.Swagger;
 
@@ -42,18 +41,33 @@ chatGpt =>
     chatGpt.UseConfiguration(builder.Configuration);
 });
 
-builder.Services.AddExceptionHandler<DefaultExceptionHandler>();
-builder.Services.AddProblemDetails(options =>
+builder.Services.AddRateLimiter(options =>
 {
-    options.CustomizeProblemDetails = context =>
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(_ =>
     {
-        var statusCode = context.ProblemDetails.Status.GetValueOrDefault(StatusCodes.Status500InternalServerError);
-        context.ProblemDetails.Type ??= $"https://httpstatuses.io/{statusCode}";
-        context.ProblemDetails.Title ??= ReasonPhrases.GetReasonPhrase(statusCode);
-        context.ProblemDetails.Instance ??= context.HttpContext.Request.Path;
-        context.ProblemDetails.Extensions["traceId"] = Activity.Current?.Id ?? context.HttpContext.TraceIdentifier;
+        return RateLimitPartition.GetTokenBucketLimiter("Default", _ => new TokenBucketRateLimiterOptions
+        {
+            TokenLimit = 100,
+            TokensPerPeriod = 20,
+            ReplenishmentPeriod = TimeSpan.FromMinutes(30),
+            QueueProcessingOrder = QueueProcessingOrder.OldestFirst
+        });
+    });
+
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = (context, token) =>
+    {
+        if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var window))
+        {
+            context.HttpContext.Response.Headers.RetryAfter = window.TotalSeconds.ToString();
+        }
+
+        return ValueTask.CompletedTask;
     };
 });
+
+builder.Services.AddDefaultProblemDetails();
+builder.Services.AddDefaultExceptionHandler();
 
 builder.Services.AddScoped<IChatService, ChatService>();
 
@@ -113,12 +127,17 @@ if (swagger.IsEnabled)
     app.UseSwagger();
     app.UseSwaggerUI(options =>
     {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "ChatGptPlayground API v1");
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "DatabaseGPT API v1");
         options.InjectStylesheet("/css/swagger.css");
     });
 }
 
 app.UseRouting();
+
+app.UseWhen(context => context.IsApiRequest(), builder =>
+{
+    builder.UseRateLimiter();
+});
 
 // app.UseCors();
 

@@ -19,37 +19,32 @@ internal class DatabaseGptClient(IChatGptClient chatGptClient, ResiliencePipelin
 
     public async Task<string> GetNaturalLanguageQueryAsync(Guid sessionId, string question, CancellationToken cancellationToken = default)
     {
-        ThrowIfDisposed();
-
-        sessionId = await CreateSessionAsync(sessionId, cancellationToken);
-
-        var query = await pipeline.ExecuteAsync(async cancellationToken =>
-        {
-            var tables = await GetTablesAsync(sessionId, question, null, cancellationToken);
-            var query = await GetQueryAsync(sessionId, question, tables, null, cancellationToken);
-
-            return query;
-        }, cancellationToken);
-
+        var (query, _) = await ExecuteNaturalLanguageQueryInternalAsync(sessionId, question, cancellationToken: cancellationToken);
         return query;
     }
 
     public async Task<DbDataReader> ExecuteNaturalLanguageQueryAsync(Guid sessionId, string question, NaturalLanguageQueryOptions? options = null, CancellationToken cancellationToken = default)
     {
+        var (_, reader) = await ExecuteNaturalLanguageQueryInternalAsync(sessionId, question, cancellationToken: cancellationToken);
+        return reader;
+    }
+
+    private async Task<(string Query, DbDataReader Reader)> ExecuteNaturalLanguageQueryInternalAsync(Guid sessionId, string question, NaturalLanguageQueryOptions? options = null, CancellationToken cancellationToken = default)
+    {
         ThrowIfDisposed();
 
         sessionId = await CreateSessionAsync(sessionId, cancellationToken);
 
-        var reader = await pipeline.ExecuteAsync(async cancellationToken =>
+        var (query, reader) = await pipeline.ExecuteAsync(async cancellationToken =>
         {
             var tables = await GetTablesAsync(sessionId, question, options, cancellationToken);
             var query = await GetQueryAsync(sessionId, question, tables, options, cancellationToken);
 
-            var reader = await provider.ExecuteQueryAsync(query);
-            return reader;
+            var reader = await provider.ExecuteQueryAsync(query, cancellationToken);
+            return (query, reader);
         }, cancellationToken);
 
-        return reader;
+        return (query, reader);
     }
 
     private async Task<Guid> CreateSessionAsync(Guid sessionId, CancellationToken cancellationToken)
@@ -57,7 +52,7 @@ internal class DatabaseGptClient(IChatGptClient chatGptClient, ResiliencePipelin
         var conversationExists = await chatGptClient.ConversationExistsAsync(sessionId, cancellationToken);
         if (!conversationExists)
         {
-            var tables = await provider.GetTablesAsync(databaseGptSettings.IncludedTables, databaseGptSettings.ExcludedTables);
+            var tables = await provider.GetTablesAsync(databaseGptSettings.IncludedTables, databaseGptSettings.ExcludedTables, cancellationToken);
 
             var systemMessage = $"""
                 You are an assistant that answers questions using the information stored in a {provider.Name} database and the {provider.Language} language.
@@ -114,7 +109,7 @@ internal class DatabaseGptClient(IChatGptClient chatGptClient, ResiliencePipelin
 
     private async Task<string> GetQueryAsync(Guid sessionId, string question, IEnumerable<string> tables, NaturalLanguageQueryOptions? options, CancellationToken cancellationToken)
     {
-        var createTableScripts = await provider.GetCreateTablesScriptAsync(tables, databaseGptSettings.ExcludedColumns);
+        var createTableScripts = await provider.GetCreateTablesScriptAsync(tables, databaseGptSettings.ExcludedColumns, cancellationToken);
 
         var request = $"""
                 A {provider.Name} database contains the following tables and columns:
@@ -128,8 +123,16 @@ internal class DatabaseGptClient(IChatGptClient chatGptClient, ResiliencePipelin
                 The query should only contain the SQL keywords that are available in a {provider.Language} SELECT query. For example, if the database is SQL SERVER, then the query should not contain the LIMIT keyword.
                 You can create only SELECT queries. Never create INSERT, UPDATE nor DELETE commands.
                 If the question of the user requires an INSERT, UPDATE or DELETE command, then return only the string 'NONE', without any other words. You shouldn't never explain the reason why you haven't created the query.
-                If you use the AS keyword to rename the columns, then you should use the following format: 'AS ColumnName' and not 'AS Column Name'. The renamed name should not contain spaces and should be in the same language of the user question.
+                If you use the AS keyword to rename the columns, then you should use the following format: 'AS ColumnName' and not 'AS Column Name'. The renamed name should not contain spaces and should be in the same language of the user question.                
+                The response should not contain any markdown tags. For example, the response should not contain '```sql' or '```'.    
                 """;
+
+        // Add specific instructions, if any, for the current provider.
+        var queryHints = await provider.GetQueryHintsAsync(cancellationToken);
+        if (!string.IsNullOrWhiteSpace(queryHints))
+        {
+            request += $"{Environment.NewLine}{queryHints}";
+        }
 
         var response = await chatGptClient.AskAsync(sessionId, request, cancellationToken: cancellationToken);
 
@@ -139,7 +142,10 @@ internal class DatabaseGptClient(IChatGptClient chatGptClient, ResiliencePipelin
             throw new InvalidSqlException($"The question '{question}' requires an INSERT, UPDATE or DELETE command, that isn't supported.");
         }
 
-        query = query[query.IndexOf("SELECT")..].Replace("```", string.Empty);
+        query = query.Replace("```sql", string.Empty, StringComparison.OrdinalIgnoreCase).Replace("```", string.Empty).Trim('\n');
+
+        // Calls the provider to validate the query.
+        query = await provider.NormalizeQueryAsync(query, cancellationToken);
 
         if (options?.OnQueryGenerated is not null)
         {

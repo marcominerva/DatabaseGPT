@@ -19,7 +19,7 @@ public class SqlServerDatabaseGptProvider(SqlServerDatabaseGptProviderConfigurat
 
     public string Language => "T-SQL";
 
-    public async Task<IEnumerable<string>> GetTablesAsync(IEnumerable<string> includedTables, IEnumerable<string> excludedTables)
+    public async Task<IEnumerable<string>> GetTablesAsync(IEnumerable<string> includedTables, IEnumerable<string> excludedTables, CancellationToken cancellationToken = default)
     {
         ThrowIfDisposed();
 
@@ -38,10 +38,10 @@ public class SqlServerDatabaseGptProvider(SqlServerDatabaseGptProviderConfigurat
         }
 
         var tables = await connection.QueryAsync<string>(query, new { tables = tablesToQuery });
-        return tables;
+        return tables.Select(table => $"[{table}]");
     }
 
-    public async Task<string> GetCreateTablesScriptAsync(IEnumerable<string> tables, IEnumerable<string> excludedColumns)
+    public async Task<string> GetCreateTablesScriptAsync(IEnumerable<string> tables, IEnumerable<string> excludedColumns, CancellationToken cancellationToken = default)
     {
         ThrowIfDisposed();
 
@@ -49,8 +49,8 @@ public class SqlServerDatabaseGptProvider(SqlServerDatabaseGptProviderConfigurat
         var splittedTableNames = tables.Select(t =>
         {
             var parts = t.Split('.');
-            var schema = parts[0].Trim();
-            var name = parts[1].Trim();
+            var schema = parts[0].TrimStart('[').TrimEnd(']');
+            var name = parts[1].TrimStart('[').TrimEnd(']');
             return new { Schema = schema, Name = name };
         });
 
@@ -69,7 +69,7 @@ public class SqlServerDatabaseGptProvider(SqlServerDatabaseGptProviderConfigurat
             var allColumns = await connection.QueryAsync<ColumnEntity>(query, new { schema = table.Schema, table = table.Name });
 
             var columns = allColumns.Where(c => IsIncluded(c, excludedColumns))
-                .Select(c => $"{c.Column} {c.Description}").ToList();
+                .Select(c => $"[{c.Column}] {c.Description}").ToList();
 
             result.AppendLine($"CREATE TABLE [{table.Schema}].[{table.Name}] ({string.Join(',', columns)});");
         }
@@ -108,7 +108,21 @@ public class SqlServerDatabaseGptProvider(SqlServerDatabaseGptProviderConfigurat
         }
     }
 
-    public async Task<DbDataReader> ExecuteQueryAsync(string query)
+    public Task<string?> GetQueryHintsAsync(CancellationToken cancellationToken = default)
+    {
+        ThrowIfDisposed();
+
+        return Task.FromResult<string?>(null);
+    }
+
+    public Task<string> NormalizeQueryAsync(string query, CancellationToken cancellationToken = default)
+    {
+        ThrowIfDisposed();
+
+        return Task.FromResult(query);
+    }
+
+    public async Task<DbDataReader> ExecuteQueryAsync(string query, CancellationToken cancellationToken = default)
     {
         ThrowIfDisposed();
 
