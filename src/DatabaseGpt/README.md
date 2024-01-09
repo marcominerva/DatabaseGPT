@@ -8,7 +8,7 @@ Query a database using natural language.
 
 Thanks to [Adam Buckley](https://github.com/happyadam73/tsql-chatgpt) for the [original inspiration](https://www.linkedin.com/pulse/query-your-data-azure-sql-using-natural-language-chatgpt-adam-buckley/) for this project.
 
-![](https://raw.githubusercontent.com/marcominerva/DatabaseGPT/master/assets/DatabaseGptConsole.gif)
+![](https://raw.githubusercontent.com/marcominerva/DatabaseGPT/master/assets/DatabaseGptWeb.gif)
 
 ### Usage
 
@@ -44,11 +44,7 @@ chatGpt =>
 });
 ```
 
-#### Using the console test application
-
-The [DatabaseGptConsole](https://github.com/marcominerva/DatabaseGPT/tree/master/samples/DatabaseGptConsole) project is a .NET console application that can be used to test the library. It requires .NET 7.0 SDK or later. If you just want to run the application, you can safely download the binaries from the [Releases section](https://github.com/marcominerva/DatabaseGPT/releases).
-
-You need to set the required values in the [appsettings.json](https://github.com/marcominerva/DatabaseGPT/blob/master/src/DatabaseGptConsole/appsettings.json) file:
+You need to set the required values in the **appsettings.json** file:
 
 ```
 "ConnectionStrings": {
@@ -75,6 +71,20 @@ For more information about how to configure the ChatGPT integration, refer to th
 
 > **Note**
 If possible, use GPT-4 models. Current experiments demonstrate that they are more accurate than GPT-3 models when generating queries.
+
+#### The Web Application
+
+The [DatabaseGptWeb](https://github.com/marcominerva/DatabaseGPT/tree/master/samples/DatabaseGpt.Web) project is a Web Application that shows how to provide a UI for **DatabaseGPT**. It requires .NET 8.0 SDK or later. To execute it, you need to set the required values in the [appsettings.json](https://github.com/marcominerva/DatabaseGPT/blob/master/samples/DatabaseGpt.Web/appsettings.json) file, as described above.
+
+You can find a live that uses the [Norwthwind database](https://learn.microsoft.com/dotnet/framework/data/adonet/sql/linq/downloading-sample-databases) on https://databasegpt.azurewebsites.net. It relies on a deployment with a limited quota, so be patient if you get some error when trying it :)
+
+#### The Console Application
+
+![](https://raw.githubusercontent.com/marcominerva/DatabaseGPT/master/assets/DatabaseGptConsole.gif)
+
+The [DatabaseGptConsole](https://github.com/marcominerva/DatabaseGPT/tree/master/samples/DatabaseGptConsole) project is a Console Application that can be used to test the library. It requires .NET 8.0 SDK or later. To execute it, you need to set the required values in the [appsettings.json](https://github.com/marcominerva/DatabaseGPT/blob/master/samples/DatabaseGptConsole/appsettings.json) file, as described above.
+
+If you just want to run the application on Windows, you can download the binaries from the [Releases section](https://github.com/marcominerva/DatabaseGPT/releases).
 
 ### Configuration
 
