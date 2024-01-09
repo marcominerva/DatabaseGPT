@@ -23,7 +23,7 @@ public class SqlServerDatabaseGptProvider(SqlServerDatabaseGptProviderConfigurat
     {
         ThrowIfDisposed();
 
-        var query = "SELECT TABLE_SCHEMA + '.' + TABLE_NAME AS Tables FROM INFORMATION_SCHEMA.TABLES";
+        var query = "SELECT QUOTENAME(TABLE_SCHEMA) + '.' + QUOTENAME(TABLE_NAME) AS TABLES FROM INFORMATION_SCHEMA.TABLES";
         IEnumerable<string>? tablesToQuery = null;
 
         if (includedTables?.Any() ?? false)
@@ -38,7 +38,7 @@ public class SqlServerDatabaseGptProvider(SqlServerDatabaseGptProviderConfigurat
         }
 
         var tables = await connection.QueryAsync<string>(query, new { tables = tablesToQuery });
-        return tables.Select(table => $"[{table}]");
+        return tables;
     }
 
     public async Task<string> GetCreateTablesScriptAsync(IEnumerable<string> tables, IEnumerable<string> excludedColumns, CancellationToken cancellationToken = default)
@@ -48,7 +48,7 @@ public class SqlServerDatabaseGptProvider(SqlServerDatabaseGptProviderConfigurat
         var result = new StringBuilder();
         var splittedTableNames = tables.Select(t =>
         {
-            var parts = t.Split('.');
+            var parts = t.Split('.', StringSplitOptions.TrimEntries);
             var schema = parts[0].TrimStart('[').TrimEnd(']');
             var name = parts[1].TrimStart('[').TrimEnd(']');
             return new { Schema = schema, Name = name };
