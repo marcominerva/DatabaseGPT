@@ -17,19 +17,19 @@ internal class DatabaseGptClient(IChatGptClient chatGptClient, ResiliencePipelin
 
     private bool disposedValue;
 
-    public async Task<string> GetNaturalLanguageQueryAsync(Guid sessionId, string question, CancellationToken cancellationToken = default)
+    public async Task<string> GetNaturalLanguageQueryAsync(Guid sessionId, string question, NaturalLanguageQueryOptions? options = null, CancellationToken cancellationToken = default)
     {
-        var (query, _) = await ExecuteNaturalLanguageQueryInternalAsync(sessionId, question, cancellationToken: cancellationToken);
+        var (query, _) = await ExecuteNaturalLanguageQueryInternalAsync(sessionId, question, options, cancellationToken: cancellationToken);
         return query;
     }
 
     public async Task<DbDataReader> ExecuteNaturalLanguageQueryAsync(Guid sessionId, string question, NaturalLanguageQueryOptions? options = null, CancellationToken cancellationToken = default)
     {
-        var (_, reader) = await ExecuteNaturalLanguageQueryInternalAsync(sessionId, question, cancellationToken: cancellationToken);
+        var (_, reader) = await ExecuteNaturalLanguageQueryInternalAsync(sessionId, question, options, cancellationToken);
         return reader;
     }
 
-    private async Task<(string Query, DbDataReader Reader)> ExecuteNaturalLanguageQueryInternalAsync(Guid sessionId, string question, NaturalLanguageQueryOptions? options = null, CancellationToken cancellationToken = default)
+    private async Task<(string Query, DbDataReader Reader)> ExecuteNaturalLanguageQueryInternalAsync(Guid sessionId, string question, NaturalLanguageQueryOptions? options, CancellationToken cancellationToken = default)
     {
         ThrowIfDisposed();
 

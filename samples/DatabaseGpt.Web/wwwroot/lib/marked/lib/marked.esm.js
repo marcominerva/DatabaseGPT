@@ -1,5 +1,5 @@
 /**
- * marked v11.1.0 - a markdown parser
+ * marked v11.1.1 - a markdown parser
  * Copyright (c) 2011-2023, Christopher Jeffrey. (MIT Licensed)
  * https://github.com/markedjs/marked
  */
@@ -1260,10 +1260,11 @@ class _Lexer {
         src = src
             .replace(/\r\n|\r/g, '\n');
         this.blockTokens(src, this.tokens);
-        let next;
-        while (next = this.inlineQueue.shift()) {
+        for (let i = 0; i < this.inlineQueue.length; i++) {
+            const next = this.inlineQueue[i];
             this.inlineTokens(next.src, next.tokens);
         }
+        this.inlineQueue = [];
         return this.tokens;
     }
     blockTokens(src, tokens = []) {
