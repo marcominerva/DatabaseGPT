@@ -1,7 +1,7 @@
 # DatabaseGPT
 
 [![Lint Code Base](https://github.com/marcominerva/DatabaseGPT/actions/workflows/linter.yml/badge.svg)](https://github.com/marcominerva/DatabaseGPT/actions/workflows/linter.yml)
-[![CodeQL](https://github.com/marcominerva/DatabaseGPT/actions/workflows/codeql.yml/badge.svg)](https://github.com/marcominerva/DatabaseGPT/actions/workflows/codeql.yml)
+[![CodeQL](https://github.com/marcominerva/DatabaseGPT/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/marcominerva/DatabaseGPT/actions/workflows/github-code-scanning/codeql)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/marcominerva/TinyHelpers/blob/master/LICENSE)
 
 Query a database using natural language.
@@ -76,7 +76,7 @@ If possible, use GPT-4 models. Current experiments demonstrate that they are mor
 
 The [DatabaseGptWeb](https://github.com/marcominerva/DatabaseGPT/tree/master/samples/DatabaseGpt.Web) project is a Web Application that shows how to provide a UI for **DatabaseGPT**. It requires .NET 8.0 SDK or later. To execute it, you need to set the required values in the [appsettings.json](https://github.com/marcominerva/DatabaseGPT/blob/master/samples/DatabaseGpt.Web/appsettings.json) file, as described above.
 
-You can find a live that uses the [Norwthwind database](https://learn.microsoft.com/dotnet/framework/data/adonet/sql/linq/downloading-sample-databases) on https://databasegpt.azurewebsites.net. It relies on a deployment with a limited quota, so be patient if you get some error when trying it :)
+You can find a live demo that uses the [Northwind database](https://learn.microsoft.com/dotnet/framework/data/adonet/sql/linq/downloading-sample-databases) on https://databasegpt.azurewebsites.net. It relies on a deployment with a limited quota, so be patient if you get some error when trying it :)
 
 #### The Console Application
 
