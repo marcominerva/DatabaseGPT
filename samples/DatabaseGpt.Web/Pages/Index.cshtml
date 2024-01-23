@@ -28,7 +28,7 @@
                             </div>
                             <div class="pe-2">
                                 <div>
-                                    <template x-if="!message.text">
+                                    <template x-if="!message.text && !message.table">
                                         <div class="card card-text d-inline-block p-3 px-3 m-1">
                                             <div class="progress-chat" role="progressbar" aria-label="I'm thinking" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
                                                 <div class="progress-bar-chat">
@@ -45,6 +45,18 @@
                                                 <button type="button" class="btn-clipboard" aria-label="Copy to clipboard" x-init="$nextTick(() => new bootstrap.Tooltip($el))"
                                                         data-bs-toggle="tooltip" data-bs-html="true"
                                                         data-bs-title="Copy to clipboard" x-on:click="copyToClipboard($el, message.text)">
+                                                    <i class="bi bi-clipboard"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <template x-if="message.table">
+                                        <div class="card card-text p-2 px-3 m-1">
+                                            <div x-html="marked.parse(message.table)"></div>
+                                            <div x-cloak class="text-end bg-transparent border-0" x-show="message.isCompleted">
+                                                <button type="button" class="btn-clipboard" aria-label="Copy to clipboard" x-init="$nextTick(() => new bootstrap.Tooltip($el))"
+                                                        data-bs-toggle="tooltip" data-bs-html="true"
+                                                        data-bs-title="Copy to clipboard" x-on:click="copyToClipboard($el, message.table)">
                                                     <i class="bi bi-clipboard"></i>
                                                 </button>
                                             </div>
@@ -84,6 +96,7 @@
                     <select class="form-select" style="width: auto; display: inline-table;" id="responseType" x-model="responseType">
                         <option value="Table">Table</option>
                         <option value="Query">Query</option>
+                        <option value="QueryAndTable">Query and Table</option>
                     </select>
                 </div>
             </form>

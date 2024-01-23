@@ -30,6 +30,7 @@
                 if (errorMessage == null) {
                     // The request has succeeded.
                     assistantMessage.text = content.text;
+                    assistantMessage.table = content.table;
                 }
                 else
                 {
