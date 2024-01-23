@@ -67,7 +67,8 @@ internal class Application(IDatabaseGptClient databaseGptClient, DatabaseGptSett
 
                 if (!string.IsNullOrWhiteSpace(question))
                 {
-                    using var reader = await databaseGptClient.ExecuteNaturalLanguageQueryAsync(conversationId, question, options);
+                    using var result = await databaseGptClient.ExecuteNaturalLanguageQueryAsync(conversationId, question, options);
+                    var reader = result.DataReader;
 
                     var table = new Table();
                     var columns = reader.GetColumnNames().Select(c => $"[olive]{c}[/]").ToArray();
