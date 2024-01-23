@@ -12,21 +12,25 @@ public class ChatService(IDatabaseGptClient databaseGptClient) : IChatService
 {
     public async Task<Result<ChatResponse>> AskAsync(ChatRequest request)
     {
-        string response = null;
-        if (request.ResponseType == ResponseType.Table)
-        {
-            using var reader = await databaseGptClient.ExecuteNaturalLanguageQueryAsync(request.ConversationId, request.Message);
-            response = GetMarkdownTable(reader);
-        }
-        else
-        {
-            // Just gets the SQL query, not the table.
-            response = await databaseGptClient.GetNaturalLanguageQueryAsync(request.ConversationId, request.Message);
-            response = $"<pre>{response.Replace("\r\n", "<br />").Replace("\n", "<br />")}</pre>";
-        }
+        using var result = await databaseGptClient.ExecuteNaturalLanguageQueryAsync(request.ConversationId, request.Message);
 
-        return new ChatResponse(response);
+        var query = request.ResponseType switch
+        {
+            ResponseType.Query or ResponseType.QueryAndTable => GetFormattedQuery(result.Query),
+            _ => null
+        };
+
+        var table = request.ResponseType switch
+        {
+            ResponseType.Table or ResponseType.QueryAndTable => GetMarkdownTable(result.DataReader),
+            _ => null
+        };
+
+        return new ChatResponse(query, table);
     }
+
+    public static string GetFormattedQuery(string query)
+        => $"<pre>{query.Replace("\r\n", "<br />").Replace("\n", "<br />")}</pre>";
 
     public static string GetMarkdownTable(DbDataReader reader)
     {

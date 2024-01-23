@@ -1,5 +1,4 @@
-﻿using System.Data.Common;
-using ChatGptNet;
+﻿using ChatGptNet;
 using ChatGptNet.Extensions;
 using DatabaseGpt.Abstractions;
 using DatabaseGpt.Exceptions;
@@ -19,17 +18,17 @@ internal class DatabaseGptClient(IChatGptClient chatGptClient, ResiliencePipelin
 
     public async Task<string> GetNaturalLanguageQueryAsync(Guid sessionId, string question, NaturalLanguageQueryOptions? options = null, CancellationToken cancellationToken = default)
     {
-        var (query, _) = await ExecuteNaturalLanguageQueryInternalAsync(sessionId, question, options, cancellationToken: cancellationToken);
-        return query;
+        var result = await ExecuteNaturalLanguageQueryInternalAsync(sessionId, question, options, cancellationToken);
+        return result.Query;
     }
 
-    public async Task<DbDataReader> ExecuteNaturalLanguageQueryAsync(Guid sessionId, string question, NaturalLanguageQueryOptions? options = null, CancellationToken cancellationToken = default)
+    public async Task<DatabaseGptQueryResult> ExecuteNaturalLanguageQueryAsync(Guid sessionId, string question, NaturalLanguageQueryOptions? options = null, CancellationToken cancellationToken = default)
     {
-        var (_, reader) = await ExecuteNaturalLanguageQueryInternalAsync(sessionId, question, options, cancellationToken);
-        return reader;
+        var result = await ExecuteNaturalLanguageQueryInternalAsync(sessionId, question, options, cancellationToken);
+        return result;
     }
 
-    private async Task<(string Query, DbDataReader Reader)> ExecuteNaturalLanguageQueryInternalAsync(Guid sessionId, string question, NaturalLanguageQueryOptions? options, CancellationToken cancellationToken = default)
+    private async Task<DatabaseGptQueryResult> ExecuteNaturalLanguageQueryInternalAsync(Guid sessionId, string question, NaturalLanguageQueryOptions? options, CancellationToken cancellationToken = default)
     {
         ThrowIfDisposed();
 
@@ -44,7 +43,7 @@ internal class DatabaseGptClient(IChatGptClient chatGptClient, ResiliencePipelin
             return (query, reader);
         }, cancellationToken);
 
-        return (query, reader);
+        return new(query, reader);
     }
 
     private async Task<Guid> CreateSessionAsync(Guid sessionId, CancellationToken cancellationToken)

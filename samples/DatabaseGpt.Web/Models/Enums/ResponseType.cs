@@ -3,5 +3,6 @@
 public enum ResponseType
 {
     Table,
-    Query
+    Query,
+    QueryAndTable
 }
