@@ -61,10 +61,13 @@ public class NpgsqlDatabaseGptProvider(NpgsqlDatabaseGptProviderConfiguration se
                     CASE WHEN CHARACTER_MAXIMUM_LENGTH = -1 THEN 'MAX' ELSE CAST(CHARACTER_MAXIMUM_LENGTH AS VARCHAR(10)) END || ')','') || ' ' || 
                     CASE WHEN IS_NULLABLE = 'YES' THEN 'NULL' ELSE 'NOT NULL' END
                 FROM INFORMATION_SCHEMA.COLUMNS
-                WHERE TABLE_SCHEMA = @schema AND TABLE_NAME = @table AND COLUMN_NAME NOT IN (SELECT UNNEST(@excludedColumns));
+                WHERE TABLE_SCHEMA = @schema
+                    AND TABLE_NAME = @table
+                    AND COLUMN_NAME NOT IN (SELECT UNNEST(@excludedColumns))
+                    AND TABLE_SCHEMA || '.' || TABLE_NAME || '.' || COLUMN_NAME NOT IN (SELECT UNNEST(@excludedColumns));
                 """;
 
-            var columns = await connection.QueryAsync<string>(query, new { schema = table.Schema, table = table.Name, ExcludedColumns = excludedColumns });
+            var columns = await connection.QueryAsync<string>(query, new { schema = table.Schema, table = table.Name, excludedColumns });
             result.AppendLine($"CREATE TABLE [{table.Schema}].[{table.Name}] ({string.Join(", ", columns)});");
         }
 
