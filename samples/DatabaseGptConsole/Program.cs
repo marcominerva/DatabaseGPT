@@ -38,6 +38,10 @@ static void ConfigureServices(HostBuilderContext context, IServiceCollection ser
         // For PostgreSQL.
         //database.UseConfiguration(context.Configuration)
         //        .UseNpgsql(context.Configuration.GetConnectionString("NpgsqlConnection"));
+
+        // For SQLite.
+        //database.UseConfiguration(context.Configuration)
+        //        .UseSqlite(context.Configuration.GetConnectionString("SqliteConnection"));
     },
     chatGpt =>
     {
