@@ -53,7 +53,8 @@ public class SqliteDatabaseGptProvider(SqliteDatabaseGptProviderConfiguration se
                     UPPER(TYPE) || ' ' ||
                     CASE WHEN [NOTNULL] = 0 THEN 'NULL' ELSE 'NOT NULL' END
                 FROM PRAGMA_TABLE_INFO(@table)
-                WHERE NAME NOT IN (@excludedColumns);
+                WHERE NAME NOT IN (@excludedColumns)
+                AND @table || '.' || NAME NOT IN (@excludedColumns);
                 """;
 
             var columns = await connection.QueryAsync<string>(query, new { table, excludedColumns });
