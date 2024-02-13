@@ -4,28 +4,28 @@ using System.Text;
 using Dapper;
 using DatabaseGpt.Abstractions;
 using DatabaseGpt.Abstractions.Exceptions;
-using Npgsql;
+using Microsoft.Data.Sqlite;
 
-namespace DatabaseGpt.Npgsql;
+namespace DatabaseGpt.Sqlite;
 
-public class NpgsqlDatabaseGptProvider(NpgsqlDatabaseGptProviderConfiguration settings) : IDatabaseGptProvider
+public class SqliteDatabaseGptProvider(SqliteDatabaseGptProviderConfiguration settings) : IDatabaseGptProvider
 {
-    private readonly NpgsqlConnection connection = new(settings.ConnectionString);
+    private readonly SqliteConnection connection = new(settings.ConnectionString);
 
     private bool disposedValue;
 
-    public string Name => "PostgreSQL";
+    public string Name => "SQLite";
 
-    public string Language => "PL/pgSQL";
+    public string Language => "SQLite";
 
     public async Task<IEnumerable<string>> GetTablesAsync(IEnumerable<string> includedTables, IEnumerable<string> excludedTables, CancellationToken cancellationToken = default)
     {
         ThrowIfDisposed();
 
         var tables = await connection.QueryAsync<string>("""
-            SELECT TABLE_SCHEMA || '.' || TABLE_NAME AS Tables
-            FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_SCHEMA NOT IN ('pg_catalog', 'information_schema')
+            SELECT TBL_NAME AS Tables
+            FROM sqlite_schema
+            WHERE type IN ('table','view') AND name NOT LIKE 'sqlite_%'
             """);
 
         if (includedTables?.Any() ?? false)
@@ -45,30 +45,20 @@ public class NpgsqlDatabaseGptProvider(NpgsqlDatabaseGptProviderConfiguration se
         ThrowIfDisposed();
 
         var result = new StringBuilder();
-        var splittedTableNames = tables.Select(t =>
-        {
-            var parts = t.Split('.');
-            var schema = parts[0].Trim();
-            var name = parts[1].Trim();
-            return new { Schema = schema, Name = name };
-        });
 
-        foreach (var table in splittedTableNames)
+        foreach (var table in tables)
         {
             var query = $"""
-                SELECT '[' || COLUMN_NAME || '] ' || 
-                    UPPER(DATA_TYPE) || COALESCE('(' || 
-                    CASE WHEN CHARACTER_MAXIMUM_LENGTH = -1 THEN 'MAX' ELSE CAST(CHARACTER_MAXIMUM_LENGTH AS VARCHAR(10)) END || ')','') || ' ' || 
-                    CASE WHEN IS_NULLABLE = 'YES' THEN 'NULL' ELSE 'NOT NULL' END
-                FROM INFORMATION_SCHEMA.COLUMNS
-                WHERE TABLE_SCHEMA = @schema
-                    AND TABLE_NAME = @table
-                    AND COLUMN_NAME NOT IN (SELECT UNNEST(@excludedColumns))
-                    AND TABLE_SCHEMA || '.' || TABLE_NAME || '.' || COLUMN_NAME NOT IN (SELECT UNNEST(@excludedColumns));
+                SELECT '[' || NAME || '] ' ||
+                    UPPER(TYPE) || ' ' ||
+                    CASE WHEN [NOTNULL] = 0 THEN 'NULL' ELSE 'NOT NULL' END
+                FROM PRAGMA_TABLE_INFO(@table)
+                WHERE NAME NOT IN (@excludedColumns)
+                AND @table || '.' || NAME NOT IN (@excludedColumns);
                 """;
 
-            var columns = await connection.QueryAsync<string>(query, new { schema = table.Schema, table = table.Name, excludedColumns });
-            result.AppendLine($"CREATE TABLE [{table.Schema}].[{table.Name}] ({string.Join(", ", columns)});");
+            var columns = await connection.QueryAsync<string>(query, new { table, excludedColumns });
+            result.AppendLine($"CREATE TABLE [{table}] ({string.Join(", ", columns)});");
         }
 
         return result.ToString();
@@ -96,7 +86,7 @@ public class NpgsqlDatabaseGptProvider(NpgsqlDatabaseGptProviderConfiguration se
         {
             return await connection.ExecuteReaderAsync(query);
         }
-        catch (NpgsqlException ex)
+        catch (SqliteException ex)
         {
             throw new DatabaseGptException("An error occurred while executing the query. See the inner exception for details.", ex);
         }
