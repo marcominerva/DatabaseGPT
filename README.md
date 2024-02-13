@@ -12,7 +12,7 @@ Thanks to [Adam Buckley](https://github.com/happyadam73/tsql-chatgpt) for the [o
 
 ### Usage
 
-Currently, SQL Server and PostgreSQL databases are supported.
+Currently, SQL Server, PostgreSQL and SQLite databases are supported.
 
 #### Using DatabaseGpt in your project
 
@@ -22,6 +22,7 @@ Database|Project to include
 -|-
 SQL Server|src/DatabaseGpt.SqlServer/DatabaseGpt.SqlServer.csproj
 PostgreSQL|src/DatabaseGpt.Npgsql/DatabaseGpt.Npgsql.csproj
+SQLite|src/DatabaseGpt.Sqlite/DatabaseGpt.Sqlite.csproj
 
 After referencing the proper projects, you can easily initialize **DatabaseGpt** at the startup of your application.
 
@@ -37,6 +38,10 @@ builder.Services.AddDatabaseGpt(database =>
     // For PostgreSQL.
     //database.UseConfiguration(context.Configuration)
     //        .UseNpgsql(context.Configuration.GetConnectionString("NpgsqlConnection"));
+
+    // For SQLite.
+    //database.UseConfiguration(context.Configuration)
+    //        .UseSqlite(context.Configuration.GetConnectionString("SqliteConnection"));
 },
 chatGpt =>
 {
@@ -50,6 +55,7 @@ You need to set the required values in the **appsettings.json** file:
 "ConnectionStrings": {
     "SqlConnection": ""             // The SQL Server connection string    
     //"NpgsqlConnection": ""        // The PostgreSQL connection string
+    //"SqliteConnection": ""        // The SQLite connection string
 },
 "ChatGPT": {
     "Provider": "OpenAI",           // Optional. Allowed values: OpenAI (default) or Azure

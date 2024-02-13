@@ -16,6 +16,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\src\DatabaseGpt.Npgsql\DatabaseGpt.Npgsql.csproj" />
+      <ProjectReference Include="..\..\src\DatabaseGpt.SQLite\DatabaseGpt.Sqlite.csproj" />
       <ProjectReference Include="..\..\src\DatabaseGpt.SqlServer\DatabaseGpt.SqlServer.csproj" />
       <ProjectReference Include="..\..\src\DatabaseGpt\DatabaseGpt.csproj" />
     </ItemGroup>
