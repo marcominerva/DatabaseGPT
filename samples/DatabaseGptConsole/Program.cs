@@ -13,10 +13,10 @@ var host = Host.CreateDefaultBuilder(args)
         if (File.Exists("SystemMessage.txt"))
         {
             var systemMessage = File.ReadAllText("SystemMessage.txt");
-            builder.AddInMemoryCollection(new List<KeyValuePair<string, string?>>
-            {
+            builder.AddInMemoryCollection(
+            [
                 new KeyValuePair<string, string?>("DatabaseGptSettings:SystemMessage", systemMessage)
-            });
+            ]);
         }
     })
     .ConfigureServices(ConfigureServices)

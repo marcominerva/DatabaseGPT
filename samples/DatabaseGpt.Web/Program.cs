@@ -8,9 +8,7 @@ using DatabaseGpt.Web.Services.Interfaces;
 using DatabaseGpt.Web.Settings;
 using DatabaseGpt.Web.Swagger;
 using Microsoft.OpenApi.Models;
-using MinimalHelpers.Routing;
 using OperationResults.AspNetCore.Http;
-using TinyHelpers.AspNetCore.ExceptionHandlers;
 using TinyHelpers.AspNetCore.Extensions;
 using TinyHelpers.AspNetCore.Swagger;
 
@@ -143,7 +141,7 @@ app.UseWhen(context => context.IsApiRequest(), builder =>
     builder.UseRateLimiter();
 });
 
-// app.UseCors();
+//app.UseCors();
 
 // In Razor Pages apps and apps with controllers, UseOutputCache must be called after UseRouting.
 //app.UseOutputCache();
