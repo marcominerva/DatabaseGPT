@@ -84,6 +84,24 @@ function elementBoundEffect(el) {
     cleanup2();
   }];
 }
+function watch(getter, callback) {
+  let firstTime = true;
+  let oldValue;
+  let effectReference = effect(() => {
+    let value = getter();
+    JSON.stringify(value);
+    if (!firstTime) {
+      queueMicrotask(() => {
+        callback(value, oldValue);
+        oldValue = value;
+      });
+    } else {
+      oldValue = value;
+    }
+    firstTime = false;
+  });
+  return () => release(effectReference);
+}
 
 // packages/alpinejs/src/utils/dispatch.js
 function dispatch(el, name, detail = {}) {
@@ -192,8 +210,8 @@ function initTree(el, walker = walk, intercept = () => {
     });
   });
 }
-function destroyTree(root) {
-  walk(root, (el) => {
+function destroyTree(root, walker = walk) {
+  walker(root, (el) => {
     cleanupAttributes(el);
     cleanupElement(el);
   });
@@ -253,21 +271,17 @@ function stopObservingMutations() {
   observer.disconnect();
   currentlyObserving = false;
 }
-var recordQueue = [];
-var willProcessRecordQueue = false;
+var queuedMutations = [];
 function flushObserver() {
-  recordQueue = recordQueue.concat(observer.takeRecords());
-  if (recordQueue.length && !willProcessRecordQueue) {
-    willProcessRecordQueue = true;
-    queueMicrotask(() => {
-      processRecordQueue();
-      willProcessRecordQueue = false;
-    });
-  }
-}
-function processRecordQueue() {
-  onMutate(recordQueue);
-  recordQueue.length = 0;
+  let records = observer.takeRecords();
+  queuedMutations.push(() => records.length > 0 && onMutate(records));
+  let queueLengthWhenTriggered = queuedMutations.length;
+  queueMicrotask(() => {
+    if (queuedMutations.length === queueLengthWhenTriggered) {
+      while (queuedMutations.length > 0)
+        queuedMutations.shift()();
+    }
+  });
 }
 function mutateDom(callback) {
   if (!currentlyObserving)
@@ -292,16 +306,16 @@ function onMutate(mutations) {
     deferredMutations = deferredMutations.concat(mutations);
     return;
   }
-  let addedNodes = [];
-  let removedNodes = [];
+  let addedNodes = /* @__PURE__ */ new Set();
+  let removedNodes = /* @__PURE__ */ new Set();
   let addedAttributes = /* @__PURE__ */ new Map();
   let removedAttributes = /* @__PURE__ */ new Map();
   for (let i = 0; i < mutations.length; i++) {
     if (mutations[i].target._x_ignoreMutationObserver)
       continue;
     if (mutations[i].type === "childList") {
-      mutations[i].addedNodes.forEach((node) => node.nodeType === 1 && addedNodes.push(node));
-      mutations[i].removedNodes.forEach((node) => node.nodeType === 1 && removedNodes.push(node));
+      mutations[i].addedNodes.forEach((node) => node.nodeType === 1 && addedNodes.add(node));
+      mutations[i].removedNodes.forEach((node) => node.nodeType === 1 && removedNodes.add(node));
     }
     if (mutations[i].type === "attributes") {
       let el = mutations[i].target;
@@ -334,7 +348,7 @@ function onMutate(mutations) {
     onAttributeAddeds.forEach((i) => i(el, attrs));
   });
   for (let node of removedNodes) {
-    if (addedNodes.includes(node))
+    if (addedNodes.has(node))
       continue;
     onElRemoveds.forEach((i) => i(node));
     destroyTree(node);
@@ -344,7 +358,7 @@ function onMutate(mutations) {
     node._x_ignore = true;
   });
   for (let node of addedNodes) {
-    if (removedNodes.includes(node))
+    if (removedNodes.has(node))
       continue;
     if (!node.isConnected)
       continue;
@@ -398,7 +412,7 @@ var mergeProxyTrap = {
     if (name == Symbol.unscopables)
       return false;
     return objects.some(
-      (obj) => Object.prototype.hasOwnProperty.call(obj, name)
+      (obj) => Object.prototype.hasOwnProperty.call(obj, name) || Reflect.has(obj, name)
     );
   },
   get({ objects }, name, thisProxy) {
@@ -406,7 +420,7 @@ var mergeProxyTrap = {
       return collapseProxies;
     return Reflect.get(
       objects.find(
-        (obj) => Object.prototype.hasOwnProperty.call(obj, name)
+        (obj) => Reflect.has(obj, name)
       ) || {},
       name,
       thisProxy
@@ -436,6 +450,8 @@ function initInterceptors2(data2) {
   let recurse = (obj, basePath = "") => {
     Object.entries(Object.getOwnPropertyDescriptors(obj)).forEach(([key, { value, enumerable }]) => {
       if (enumerable === false || value === void 0)
+        return;
+      if (typeof value === "object" && value !== null && value.__v_skip)
         return;
       let path = basePath === "" ? key : `${basePath}.${key}`;
       if (typeof value === "object" && value !== null && value._x_interceptor) {
@@ -530,7 +546,10 @@ function tryCatch(el, expression, callback, ...args) {
   }
 }
 function handleError(error2, el, expression = void 0) {
-  Object.assign(error2, { el, expression });
+  error2 = Object.assign(
+    error2 ?? { message: "No error message given." },
+    { el, expression }
+  );
   console.warn(`Alpine Expression Error: ${error2.message}
 
 ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
@@ -650,9 +669,7 @@ function directive(name, callback) {
   return {
     before(directive2) {
       if (!directiveHandlers[directive2]) {
-        console.warn(
-          "Cannot find directive `${directive}`. `${name}` will use the default order of execution"
-        );
+        console.warn(String.raw`Cannot find directive \`${directive2}\`. \`${name}\` will use the default order of execution`);
         return;
       }
       const pos = directiveOrder.indexOf(directive2);
@@ -1466,25 +1483,25 @@ function throttle(func, limit) {
 function entangle({ get: outerGet, set: outerSet }, { get: innerGet, set: innerSet }) {
   let firstRun = true;
   let outerHash;
+  let innerHash;
   let reference = effect(() => {
-    const outer = outerGet();
-    const inner = innerGet();
+    let outer = outerGet();
+    let inner = innerGet();
     if (firstRun) {
       innerSet(cloneIfObject(outer));
       firstRun = false;
-      outerHash = JSON.stringify(outer);
     } else {
-      const outerHashLatest = JSON.stringify(outer);
+      let outerHashLatest = JSON.stringify(outer);
+      let innerHashLatest = JSON.stringify(inner);
       if (outerHashLatest !== outerHash) {
         innerSet(cloneIfObject(outer));
-        outerHash = outerHashLatest;
-      } else {
+      } else if (outerHashLatest !== innerHashLatest) {
         outerSet(cloneIfObject(inner));
-        outerHash = JSON.stringify(inner);
+      } else {
       }
     }
-    JSON.stringify(innerGet());
-    JSON.stringify(outerGet());
+    outerHash = JSON.stringify(outerGet());
+    innerHash = JSON.stringify(innerGet());
   });
   return () => {
     release(reference);
@@ -1603,7 +1620,7 @@ var Alpine = {
   get raw() {
     return raw;
   },
-  version: "3.13.3",
+  version: "3.13.7",
   flushAndStopDeferringMutations,
   dontAutoEvaluateFunctions,
   disableEffectScheduling,
@@ -1656,6 +1673,7 @@ var Alpine = {
   // INTERNAL
   bound: getBinding,
   $data: scope,
+  watch,
   walk,
   data,
   bind: bind2
@@ -2377,23 +2395,15 @@ magic("nextTick", () => nextTick);
 magic("dispatch", (el) => dispatch.bind(dispatch, el));
 
 // packages/alpinejs/src/magics/$watch.js
-magic("watch", (el, { evaluateLater: evaluateLater2, effect: effect3 }) => (key, callback) => {
+magic("watch", (el, { evaluateLater: evaluateLater2, cleanup: cleanup2 }) => (key, callback) => {
   let evaluate2 = evaluateLater2(key);
-  let firstTime = true;
-  let oldValue;
-  let effectReference = effect3(() => evaluate2((value) => {
-    JSON.stringify(value);
-    if (!firstTime) {
-      queueMicrotask(() => {
-        callback(value, oldValue);
-        oldValue = value;
-      });
-    } else {
-      oldValue = value;
-    }
-    firstTime = false;
-  }));
-  el._x_effects.delete(effectReference);
+  let getter = () => {
+    let value;
+    evaluate2((i) => value = i);
+    return value;
+  };
+  let unwatch = watch(getter, callback);
+  cleanup2(unwatch);
 });
 
 // packages/alpinejs/src/magics/$store.js
@@ -2414,12 +2424,10 @@ magic("refs", (el) => {
 });
 function getArrayOfRefObject(el) {
   let refObjects = [];
-  let currentEl = el;
-  while (currentEl) {
-    if (currentEl._x_refs)
-      refObjects.push(currentEl._x_refs);
-    currentEl = currentEl.parentNode;
-  }
+  findClosest(el, (i) => {
+    if (i._x_refs)
+      refObjects.push(i._x_refs);
+  });
   return refObjects;
 }
 
@@ -2444,11 +2452,31 @@ function setIdRoot(el, name) {
 }
 
 // packages/alpinejs/src/magics/$id.js
-magic("id", (el) => (name, key = null) => {
-  let root = closestIdRoot(el, name);
-  let id = root ? root._x_ids[name] : findAndIncrementId(name);
-  return key ? `${name}-${id}-${key}` : `${name}-${id}`;
+magic("id", (el, { cleanup: cleanup2 }) => (name, key = null) => {
+  let cacheKey = `${name}${key ? `-${key}` : ""}`;
+  return cacheIdByNameOnElement(el, cacheKey, cleanup2, () => {
+    let root = closestIdRoot(el, name);
+    let id = root ? root._x_ids[name] : findAndIncrementId(name);
+    return key ? `${name}-${id}-${key}` : `${name}-${id}`;
+  });
 });
+interceptClone((from, to) => {
+  if (from._x_id) {
+    to._x_id = from._x_id;
+  }
+});
+function cacheIdByNameOnElement(el, cacheKey, cleanup2, callback) {
+  if (!el._x_id)
+    el._x_id = {};
+  if (el._x_id[cacheKey])
+    return el._x_id[cacheKey];
+  let output = callback();
+  el._x_id[cacheKey] = output;
+  cleanup2(() => {
+    delete el._x_id[cacheKey];
+  });
+  return output;
+}
 
 // packages/alpinejs/src/magics/$el.js
 magic("el", (el) => el);
@@ -2768,7 +2796,7 @@ directive("model", (el, { modifiers, expression }, { effect: effect3, cleanup: c
     setValue(getInputValue(el, modifiers, e, getValue()));
   });
   if (modifiers.includes("fill")) {
-    if ([null, ""].includes(getValue()) || el.type === "checkbox" && Array.isArray(getValue())) {
+    if ([void 0, null, ""].includes(getValue()) || el.type === "checkbox" && Array.isArray(getValue())) {
       el.dispatchEvent(new Event(event, {}));
     }
   }
@@ -3059,13 +3087,21 @@ function loop(el, iteratorNames, evaluateItems, evaluateKey) {
     if (isObject2(items)) {
       items = Object.entries(items).map(([key, value]) => {
         let scope2 = getIterationScopeVariables(iteratorNames, value, key, items);
-        evaluateKey((value2) => keys.push(value2), { scope: { index: key, ...scope2 } });
+        evaluateKey((value2) => {
+          if (keys.includes(value2))
+            warn("Duplicate key on x-for", el);
+          keys.push(value2);
+        }, { scope: { index: key, ...scope2 } });
         scopes.push(scope2);
       });
     } else {
       for (let i = 0; i < items.length; i++) {
         let scope2 = getIterationScopeVariables(iteratorNames, items[i], i, items);
-        evaluateKey((value) => keys.push(value), { scope: { index: i, ...scope2 } });
+        evaluateKey((value) => {
+          if (keys.includes(value))
+            warn("Duplicate key on x-for", el);
+          keys.push(value);
+        }, { scope: { index: i, ...scope2 } });
         scopes.push(scope2);
       }
     }
@@ -3113,7 +3149,7 @@ function loop(el, iteratorNames, evaluateItems, evaluateKey) {
       let marker = document.createElement("div");
       mutateDom(() => {
         if (!elForSpot)
-          warn(`x-for ":key" is undefined or invalid`, templateEl);
+          warn(`x-for ":key" is undefined or invalid`, templateEl, keyForSpot, lookup);
         elForSpot.after(marker);
         elInSpot.after(elForSpot);
         elForSpot._x_currentIfEl && elForSpot.after(elForSpot._x_currentIfEl);
@@ -3140,7 +3176,7 @@ function loop(el, iteratorNames, evaluateItems, evaluateKey) {
       };
       mutateDom(() => {
         lastEl.after(clone2);
-        initTree(clone2);
+        skipDuringClone(() => initTree(clone2))();
       });
       if (typeof key === "object") {
         warn("x-for key cannot be an object, it must be a string or an integer", templateEl);
@@ -3224,7 +3260,7 @@ directive("if", (el, { expression }, { effect: effect3, cleanup: cleanup2 }) => 
     addScopeToNode(clone2, {}, el);
     mutateDom(() => {
       el.after(clone2);
-      initTree(clone2);
+      skipDuringClone(() => initTree(clone2))();
     });
     el._x_currentIfEl = clone2;
     el._x_undoIf = () => {
@@ -3254,6 +3290,11 @@ directive("if", (el, { expression }, { effect: effect3, cleanup: cleanup2 }) => 
 directive("id", (el, { expression }, { evaluate: evaluate2 }) => {
   let names = evaluate2(expression);
   names.forEach((name) => setIdRoot(el, name));
+});
+interceptClone((from, to) => {
+  if (from._x_ids) {
+    to._x_ids = from._x_ids;
+  }
 });
 
 // packages/alpinejs/src/directives/x-on.js
@@ -3291,5 +3332,6 @@ var src_default = alpine_default;
 // packages/alpinejs/builds/module.js
 var module_default = src_default;
 export {
+  src_default as Alpine,
   module_default as default
 };
