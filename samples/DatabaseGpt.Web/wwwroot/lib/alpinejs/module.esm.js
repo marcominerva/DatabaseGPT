@@ -1396,7 +1396,6 @@ function isBooleanAttr(attrName) {
     "checked",
     "required",
     "readonly",
-    "hidden",
     "open",
     "selected",
     "autofocus",
@@ -1620,7 +1619,7 @@ var Alpine = {
   get raw() {
     return raw;
   },
-  version: "3.13.7",
+  version: "3.13.8",
   flushAndStopDeferringMutations,
   dontAutoEvaluateFunctions,
   disableEffectScheduling,
@@ -2797,7 +2796,9 @@ directive("model", (el, { modifiers, expression }, { effect: effect3, cleanup: c
   });
   if (modifiers.includes("fill")) {
     if ([void 0, null, ""].includes(getValue()) || el.type === "checkbox" && Array.isArray(getValue())) {
-      el.dispatchEvent(new Event(event, {}));
+      setValue(
+        getInputValue(el, modifiers, { target: el }, getValue())
+      );
     }
   }
   if (!el._x_removeModelListeners)
@@ -2866,12 +2867,25 @@ function getInputValue(el, modifiers, event, currentValue) {
         return option.value || option.text;
       });
     } else {
-      if (modifiers.includes("number")) {
-        return safeParseNumber(event.target.value);
-      } else if (modifiers.includes("boolean")) {
-        return safeParseBoolean(event.target.value);
+      let newValue;
+      if (el.type === "radio") {
+        if (event.target.checked) {
+          newValue = event.target.value;
+        } else {
+          newValue = currentValue;
+        }
+      } else {
+        newValue = event.target.value;
       }
-      return modifiers.includes("trim") ? event.target.value.trim() : event.target.value;
+      if (modifiers.includes("number")) {
+        return safeParseNumber(newValue);
+      } else if (modifiers.includes("boolean")) {
+        return safeParseBoolean(newValue);
+      } else if (modifiers.includes("trim")) {
+        return newValue.trim();
+      } else {
+        return newValue;
+      }
     }
   });
 }
@@ -2930,7 +2944,7 @@ directive("html", (el, { expression }, { effect: effect3, evaluateLater: evaluat
 
 // packages/alpinejs/src/directives/x-bind.js
 mapAttributes(startingWith(":", into(prefix("bind:"))));
-var handler2 = (el, { value, modifiers, expression, original }, { effect: effect3 }) => {
+var handler2 = (el, { value, modifiers, expression, original }, { effect: effect3, cleanup: cleanup2 }) => {
   if (!value) {
     let bindingProviders = {};
     injectBindingProviders(bindingProviders);
@@ -2952,6 +2966,10 @@ var handler2 = (el, { value, modifiers, expression, original }, { effect: effect
     }
     mutateDom(() => bind(el, value, result, modifiers));
   }));
+  cleanup2(() => {
+    el._x_undoAddedClasses && el._x_undoAddedClasses();
+    el._x_undoAddedStyles && el._x_undoAddedStyles();
+  });
 };
 handler2.inline = (el, { value, modifiers, expression }) => {
   if (!value)
