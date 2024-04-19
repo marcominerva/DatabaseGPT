@@ -9,8 +9,8 @@
 
     <ItemGroup>
         <PackageReference Include="LigerShark.WebOptimizer.Core" Version="3.0.405" />
-        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.3" />
-        <PackageReference Include="MinimalHelpers.OpenApi" Version="2.0.3" />
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.4" />
+        <PackageReference Include="MinimalHelpers.OpenApi" Version="2.0.5" />
         <PackageReference Include="MinimalHelpers.Routing.Analyzers" Version="1.0.7" />
         <PackageReference Include="OperationResultTools.AspNetCore.Http" Version="1.0.22" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
