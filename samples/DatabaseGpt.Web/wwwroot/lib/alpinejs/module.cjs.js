@@ -2522,7 +2522,7 @@ window.Element.prototype._x_toggleAndCascadeWithTransitions = function(el, value
           let carry = Promise.all([
             el2._x_hidePromise,
             ...(el2._x_hideChildren || []).map(hideAfterChildren)
-          ]).then(([i]) => i());
+          ]).then(([i]) => i == null ? void 0 : i());
           delete el2._x_hidePromise;
           delete el2._x_hideChildren;
           return carry;
@@ -3055,7 +3055,7 @@ var Alpine = {
   get raw() {
     return raw;
   },
-  version: "3.13.10",
+  version: "3.14.0",
   flushAndStopDeferringMutations,
   dontAutoEvaluateFunctions,
   disableEffectScheduling,
@@ -3392,14 +3392,14 @@ function on(el, event, modifiers, callback) {
     handler4 = wrapHandler(handler4, (next, e) => {
       e.target === el && next(e);
     });
-  handler4 = wrapHandler(handler4, (next, e) => {
-    if (isKeyEvent(event)) {
+  if (isKeyEvent(event) || isClickEvent(event)) {
+    handler4 = wrapHandler(handler4, (next, e) => {
       if (isListeningForASpecificKeyThatHasntBeenPressed(e, modifiers)) {
         return;
       }
-    }
-    next(e);
-  });
+      next(e);
+    });
+  }
   listenerTarget.addEventListener(event, handler4, options);
   return () => {
     listenerTarget.removeEventListener(event, handler4, options);
@@ -3424,9 +3424,12 @@ function kebabCase2(subject) {
 function isKeyEvent(event) {
   return ["keydown", "keyup"].includes(event);
 }
+function isClickEvent(event) {
+  return ["contextmenu", "click", "mouse"].some((i) => event.includes(i));
+}
 function isListeningForASpecificKeyThatHasntBeenPressed(e, modifiers) {
   let keyModifiers = modifiers.filter((i) => {
-    return !["window", "document", "prevent", "stop", "once", "capture"].includes(i);
+    return !["window", "document", "prevent", "stop", "once", "capture", "self", "away", "outside", "passive"].includes(i);
   });
   if (keyModifiers.includes("debounce")) {
     let debounceIndex = keyModifiers.indexOf("debounce");
@@ -3450,6 +3453,8 @@ function isListeningForASpecificKeyThatHasntBeenPressed(e, modifiers) {
       return e[`${modifier}Key`];
     });
     if (activelyPressedKeyModifiers.length === selectedSystemKeyModifiers.length) {
+      if (isClickEvent(e.type))
+        return false;
       if (keyToModifiers(e.key).includes(keyModifiers[0]))
         return false;
     }
