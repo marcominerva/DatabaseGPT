@@ -1109,7 +1109,7 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
             let carry = Promise.all([
               el2._x_hidePromise,
               ...(el2._x_hideChildren || []).map(hideAfterChildren)
-            ]).then(([i]) => i());
+            ]).then(([i]) => i?.());
             delete el2._x_hidePromise;
             delete el2._x_hideChildren;
             return carry;
@@ -1642,7 +1642,7 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
     get raw() {
       return raw;
     },
-    version: "3.13.10",
+    version: "3.14.0",
     flushAndStopDeferringMutations,
     dontAutoEvaluateFunctions,
     disableEffectScheduling,
@@ -2684,14 +2684,14 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
       handler4 = wrapHandler(handler4, (next, e) => {
         e.target === el && next(e);
       });
-    handler4 = wrapHandler(handler4, (next, e) => {
-      if (isKeyEvent(event)) {
+    if (isKeyEvent(event) || isClickEvent(event)) {
+      handler4 = wrapHandler(handler4, (next, e) => {
         if (isListeningForASpecificKeyThatHasntBeenPressed(e, modifiers)) {
           return;
         }
-      }
-      next(e);
-    });
+        next(e);
+      });
+    }
     listenerTarget.addEventListener(event, handler4, options);
     return () => {
       listenerTarget.removeEventListener(event, handler4, options);
@@ -2716,9 +2716,12 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
   function isKeyEvent(event) {
     return ["keydown", "keyup"].includes(event);
   }
+  function isClickEvent(event) {
+    return ["contextmenu", "click", "mouse"].some((i) => event.includes(i));
+  }
   function isListeningForASpecificKeyThatHasntBeenPressed(e, modifiers) {
     let keyModifiers = modifiers.filter((i) => {
-      return !["window", "document", "prevent", "stop", "once", "capture"].includes(i);
+      return !["window", "document", "prevent", "stop", "once", "capture", "self", "away", "outside", "passive"].includes(i);
     });
     if (keyModifiers.includes("debounce")) {
       let debounceIndex = keyModifiers.indexOf("debounce");
@@ -2742,6 +2745,8 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
         return e[`${modifier}Key`];
       });
       if (activelyPressedKeyModifiers.length === selectedSystemKeyModifiers.length) {
+        if (isClickEvent(e.type))
+          return false;
         if (keyToModifiers(e.key).includes(keyModifiers[0]))
           return false;
       }
