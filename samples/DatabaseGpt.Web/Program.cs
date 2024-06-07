@@ -24,21 +24,12 @@ builder.Services.AddRazorPages();
 
 builder.Services.AddWebOptimizer(minifyCss: true, minifyJavaScript: builder.Environment.IsProduction());
 
-builder.Services.AddDatabaseGpt(database =>
+builder.Services.AddDatabaseGpt((provider, database) =>
 {
-    // For SQL Server.
     database.UseConfiguration(builder.Configuration)
             .UseSqlServer(builder.Configuration.GetConnectionString("SqlConnection"));
-
-    // For PostgreSQL.
-    //database.UseConfiguration(context.Configuration)
-    //        .UseNpgsql(context.Configuration.GetConnectionString("NpgsqlConnection"));
-
-    // For SQLite.
-    //database.UseConfiguration(context.Configuration)
-    //        .UseSqlite(context.Configuration.GetConnectionString("SqliteConnection"));
 },
-chatGpt =>
+(provider, chatGpt) =>
 {
     chatGpt.UseConfiguration(builder.Configuration);
 });
