@@ -43,6 +43,22 @@ chatGpt =>
     chatGpt.UseConfiguration(builder.Configuration);
 });
 
+// If you want to change configuration dynamically, you can use the following overloads, with sample code:
+//builder.Services.AddDatabaseGpt((provider, database) =>
+//{
+//    var userSettingsService = provider.GetRequiredService<IUserSettingsService>();
+//    var connectionString = userSettingsService.GetConnectionString();
+
+//    database.UseConfiguration(builder.Configuration).UseSqlServer(connectionString);
+//},
+//(provider, chatGpt) =>
+//{
+//    var userSettingsService = provider.GetRequiredService<IUserSettingsService>();
+//    var openAIApiKey = userSettingsService.GetOpenAIKey();
+
+//    chatGpt.UseOpenAI(openAIApiKey);
+//});
+
 builder.Services.AddRateLimiter(options =>
 {
     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(_ =>
