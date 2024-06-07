@@ -24,15 +24,40 @@ builder.Services.AddRazorPages();
 
 builder.Services.AddWebOptimizer(minifyCss: true, minifyJavaScript: builder.Environment.IsProduction());
 
-builder.Services.AddDatabaseGpt((provider, database) =>
+builder.Services.AddDatabaseGpt(database =>
 {
+    // For SQL Server.
     database.UseConfiguration(builder.Configuration)
             .UseSqlServer(builder.Configuration.GetConnectionString("SqlConnection"));
+
+    // For PostgreSQL.
+    //database.UseConfiguration(context.Configuration)
+    //        .UseNpgsql(context.Configuration.GetConnectionString("NpgsqlConnection"));
+
+    // For SQLite.
+    //database.UseConfiguration(context.Configuration)
+    //        .UseSqlite(context.Configuration.GetConnectionString("SqliteConnection"));
 },
-(provider, chatGpt) =>
+chatGpt =>
 {
     chatGpt.UseConfiguration(builder.Configuration);
 });
+
+// If you want to change configuration dynamically, you can use the following overloads, with sample code:
+//builder.Services.AddDatabaseGpt((provider, database) =>
+//{
+//    var userSettingsService = provider.GetRequiredService<IUserSettingsService>();
+//    var connectionString = userSettingsService.GetConnectionString();
+
+//    database.UseConfiguration(builder.Configuration).UseSqlServer(connectionString);
+//},
+//(provider, chatGpt) =>
+//{
+//    var userSettingsService = provider.GetRequiredService<IUserSettingsService>();
+//    var openAIApiKey = userSettingsService.GetOpenAIKey();
+
+//    chatGpt.UseOpenAI(openAIApiKey);
+//});
 
 builder.Services.AddRateLimiter(options =>
 {
