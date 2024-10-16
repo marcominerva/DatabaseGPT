@@ -142,10 +142,9 @@
     });
   }
   function cleanupElement(el) {
-    if (el._x_cleanups) {
-      while (el._x_cleanups.length)
-        el._x_cleanups.pop()();
-    }
+    el._x_effects?.forEach(dequeueJob);
+    while (el._x_cleanups?.length)
+      el._x_cleanups.pop()();
   }
   var observer = new MutationObserver(onMutate);
   var currentlyObserving = false;
@@ -401,26 +400,22 @@
     magics[name] = callback;
   }
   function injectMagics(obj, el) {
+    let memoizedUtilities = getUtilities(el);
     Object.entries(magics).forEach(([name, callback]) => {
-      let memoizedUtilities = null;
-      function getUtilities() {
-        if (memoizedUtilities) {
-          return memoizedUtilities;
-        } else {
-          let [utilities, cleanup2] = getElementBoundUtilities(el);
-          memoizedUtilities = { interceptor, ...utilities };
-          onElRemoved(el, cleanup2);
-          return memoizedUtilities;
-        }
-      }
       Object.defineProperty(obj, `$${name}`, {
         get() {
-          return callback(el, getUtilities());
+          return callback(el, memoizedUtilities);
         },
         enumerable: false
       });
     });
     return obj;
+  }
+  function getUtilities(el) {
+    let [utilities, cleanup2] = getElementBoundUtilities(el);
+    let utils = { interceptor, ...utilities };
+    onElRemoved(el, cleanup2);
+    return utils;
   }
 
   // packages/alpinejs/src/utils/error.js
@@ -818,8 +813,8 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
   }
   function destroyTree(root, walker = walk) {
     walker(root, (el) => {
-      cleanupAttributes(el);
       cleanupElement(el);
+      cleanupAttributes(el);
     });
   }
   function warnAboutMissingPlugins() {
@@ -1326,7 +1321,7 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
     }
   }
   function bindInputValue(el, value) {
-    if (el.type === "radio") {
+    if (isRadio(el)) {
       if (el.attributes.value === void 0) {
         el.value = value;
       }
@@ -1337,7 +1332,7 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
           el.checked = checkedAttrLooseCompare(el.value, value);
         }
       }
-    } else if (el.type === "checkbox") {
+    } else if (isCheckbox(el)) {
       if (Number.isInteger(value)) {
         el.value = value;
       } else if (!Array.isArray(value) && typeof value !== "boolean" && ![null, void 0].includes(value)) {
@@ -1413,34 +1408,37 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
     }
     return rawValue ? Boolean(rawValue) : null;
   }
+  var booleanAttributes = /* @__PURE__ */ new Set([
+    "allowfullscreen",
+    "async",
+    "autofocus",
+    "autoplay",
+    "checked",
+    "controls",
+    "default",
+    "defer",
+    "disabled",
+    "formnovalidate",
+    "inert",
+    "ismap",
+    "itemscope",
+    "loop",
+    "multiple",
+    "muted",
+    "nomodule",
+    "novalidate",
+    "open",
+    "playsinline",
+    "readonly",
+    "required",
+    "reversed",
+    "selected",
+    "shadowrootclonable",
+    "shadowrootdelegatesfocus",
+    "shadowrootserializable"
+  ]);
   function isBooleanAttr(attrName) {
-    const booleanAttributes = [
-      "disabled",
-      "checked",
-      "required",
-      "readonly",
-      "open",
-      "selected",
-      "autofocus",
-      "itemscope",
-      "multiple",
-      "novalidate",
-      "allowfullscreen",
-      "allowpaymentrequest",
-      "formnovalidate",
-      "autoplay",
-      "controls",
-      "loop",
-      "muted",
-      "playsinline",
-      "default",
-      "ismap",
-      "reversed",
-      "async",
-      "defer",
-      "nomodule"
-    ];
-    return booleanAttributes.includes(attrName);
+    return booleanAttributes.has(attrName);
   }
   function attributeShouldntBePreservedIfFalsy(name) {
     return !["aria-pressed", "aria-checked", "aria-expanded", "aria-selected"].includes(name);
@@ -1472,6 +1470,12 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
       return !![name, "true"].includes(attr);
     }
     return attr;
+  }
+  function isCheckbox(el) {
+    return el.type === "checkbox" || el.localName === "ui-checkbox" || el.localName === "ui-switch";
+  }
+  function isRadio(el) {
+    return el.type === "radio" || el.localName === "ui-radio";
   }
 
   // packages/alpinejs/src/utils/debounce.js
@@ -1551,10 +1555,10 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
       return stores[name];
     }
     stores[name] = value;
+    initInterceptors(stores[name]);
     if (typeof value === "object" && value !== null && value.hasOwnProperty("init") && typeof value.init === "function") {
       stores[name].init();
     }
-    initInterceptors(stores[name]);
   }
   function getStores() {
     return stores;
@@ -1642,7 +1646,7 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
     get raw() {
       return raw;
     },
-    version: "3.14.1",
+    version: "3.14.3",
     flushAndStopDeferringMutations,
     dontAutoEvaluateFunctions,
     disableEffectScheduling,
@@ -2592,7 +2596,12 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
         placeInDom(el._x_teleport, target2, modifiers);
       });
     };
-    cleanup2(() => clone2.remove());
+    cleanup2(
+      () => mutateDom(() => {
+        clone2.remove();
+        destroyTree(clone2);
+      })
+    );
   });
   var teleportContainerDuringClone = document.createElement("div");
   function getTarget(expression) {
@@ -2826,7 +2835,7 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
       setValue(getInputValue(el, modifiers, e, getValue()));
     });
     if (modifiers.includes("fill")) {
-      if ([void 0, null, ""].includes(getValue()) || el.type === "checkbox" && Array.isArray(getValue()) || el.tagName.toLowerCase() === "select" && el.multiple) {
+      if ([void 0, null, ""].includes(getValue()) || isCheckbox(el) && Array.isArray(getValue()) || el.tagName.toLowerCase() === "select" && el.multiple) {
         setValue(
           getInputValue(el, modifiers, { target: el }, getValue())
         );
@@ -2868,7 +2877,7 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
     return mutateDom(() => {
       if (event instanceof CustomEvent && event.detail !== void 0)
         return event.detail !== null && event.detail !== void 0 ? event.detail : event.target.value;
-      else if (el.type === "checkbox") {
+      else if (isCheckbox(el)) {
         if (Array.isArray(currentValue)) {
           let newValue = null;
           if (modifiers.includes("number")) {
@@ -2899,7 +2908,7 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
         });
       } else {
         let newValue;
-        if (el.type === "radio") {
+        if (isRadio(el)) {
           if (event.target.checked) {
             newValue = event.target.value;
           } else {
@@ -3115,7 +3124,12 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
     el._x_lookup = {};
     effect3(() => loop(el, iteratorNames, evaluateItems, evaluateKey));
     cleanup2(() => {
-      Object.values(el._x_lookup).forEach((el2) => el2.remove());
+      Object.values(el._x_lookup).forEach((el2) => mutateDom(
+        () => {
+          destroyTree(el2);
+          el2.remove();
+        }
+      ));
       delete el._x_prevKeys;
       delete el._x_lookup;
     });
@@ -3184,11 +3198,12 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
       }
       for (let i = 0; i < removes.length; i++) {
         let key = removes[i];
-        if (!!lookup[key]._x_effects) {
-          lookup[key]._x_effects.forEach(dequeueJob);
-        }
-        lookup[key].remove();
-        lookup[key] = null;
+        if (!(key in lookup))
+          continue;
+        mutateDom(() => {
+          destroyTree(lookup[key]);
+          lookup[key].remove();
+        });
         delete lookup[key];
       }
       for (let i = 0; i < moves.length; i++) {
@@ -3313,12 +3328,10 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
       });
       el._x_currentIfEl = clone2;
       el._x_undoIf = () => {
-        walk(clone2, (node) => {
-          if (!!node._x_effects) {
-            node._x_effects.forEach(dequeueJob);
-          }
+        mutateDom(() => {
+          destroyTree(clone2);
+          clone2.remove();
         });
-        clone2.remove();
         delete el._x_currentIfEl;
       };
       return clone2;
