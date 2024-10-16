@@ -318,7 +318,7 @@
       ) || objects[objects.length - 1];
       const descriptor = Object.getOwnPropertyDescriptor(target, name);
       if (descriptor?.set && descriptor?.get)
-        return Reflect.set(target, name, value, thisProxy);
+        return descriptor.set.call(thisProxy, value) || true;
       return Reflect.set(target, name, value);
     }
   };
@@ -1642,7 +1642,7 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
     get raw() {
       return raw;
     },
-    version: "3.14.0",
+    version: "3.14.1",
     flushAndStopDeferringMutations,
     dontAutoEvaluateFunctions,
     disableEffectScheduling,
