@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
     </PropertyGroup>
@@ -11,8 +11,9 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="ChatGptNet" Version="3.3.5" />
-        <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="8.10.0" />
+        <PackageReference Include="Microsoft.Extensions.AI.Abstractions" Version="9.5.0" />
+        <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" Version="9.5.0" />
+        <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="9.5.0" />
     </ItemGroup>
 
     <ItemGroup>
