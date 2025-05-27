@@ -1,4 +1,5 @@
 ﻿using DatabaseGpt.Abstractions;
+using DatabaseGpt.Abstractions.Exceptions;
 using DatabaseGpt.Exceptions;
 using DatabaseGpt.Models;
 using DatabaseGpt.Settings;
@@ -40,8 +41,21 @@ internal class DatabaseGptClient(IChatClient chatGptClient, HybridCache cache, R
             var tables = await GetTablesAsync(sessionId, question, options, cancellationToken);
             var query = await GetQueryAsync(sessionId, question, tables, options, cancellationToken);
 
-            var reader = await provider.ExecuteQueryAsync(query, cancellationToken);
-            return (query, reader);
+            try
+            {
+                var reader = await provider.ExecuteQueryAsync(query, cancellationToken);
+                return (query, reader);
+            }
+            catch (DatabaseGptException ex)
+            {
+                // If there is an exception while executing the query, we log it in the chat history, so the assistant can learn from it.
+                var chat = await GetChatHistoryAsync(sessionId, cancellationToken);
+                chat.Add(new(ChatRole.Assistant, ex.ToString()));
+                await UpdateCacheAsync(sessionId, chat, cancellationToken);
+
+                //Rethrow the exception, so it will be handled by the pipeline.
+                throw;
+            }
         }, cancellationToken);
 
         return new(query, reader);
@@ -49,7 +63,9 @@ internal class DatabaseGptClient(IChatClient chatGptClient, HybridCache cache, R
 
     private async Task<Guid> CreateSessionAsync(Guid sessionId, CancellationToken cancellationToken)
     {
+        sessionId = sessionId == default ? Guid.CreateVersion7() : sessionId;
         var history = await GetChatHistoryAsync(sessionId, cancellationToken);
+
         if (history.Count == 0)
         {
             var tables = await provider.GetTablesAsync(databaseGptSettings.IncludedTables, databaseGptSettings.ExcludedTables, cancellationToken);
@@ -93,7 +109,7 @@ internal class DatabaseGptClient(IChatClient chatGptClient, HybridCache cache, R
         }
 
         var chat = await GetChatHistoryAsync(sessionId, cancellationToken);
-        chat.Add(new(ChatRole.User, question));
+        chat.Add(new(ChatRole.User, request));
 
         var response = await chatGptClient.GetResponseAsync(chat, cancellationToken: cancellationToken);
 
@@ -143,7 +159,7 @@ internal class DatabaseGptClient(IChatClient chatGptClient, HybridCache cache, R
         }
 
         var chat = await GetChatHistoryAsync(sessionId, cancellationToken);
-        chat.Add(new(ChatRole.User, question));
+        chat.Add(new(ChatRole.User, request));
 
         var response = await chatGptClient.GetResponseAsync(chat, cancellationToken: cancellationToken);
 
