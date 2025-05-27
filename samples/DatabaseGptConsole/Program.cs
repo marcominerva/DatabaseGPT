@@ -1,6 +1,8 @@
-﻿using ChatGptNet;
+﻿using Azure;
+using Azure.AI.OpenAI;
 using DatabaseGpt;
 using DatabaseGptConsole;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -29,6 +31,17 @@ static void ConfigureServices(HostBuilderContext context, IServiceCollection ser
 {
     services.AddSingleton<Application>();
 
+    services.AddHybridCache();
+
+    var apiKey = context.Configuration.GetValue<string>("ChatGPT:ApiKey")!;
+    var deploymentName = context.Configuration.GetValue<string>("ChatGPT:DeploymentName")!;
+    var endpoint = context.Configuration.GetValue<string>("ChatGpt:Endpoint")!;
+
+    var azureOpenAIClient = new AzureOpenAIClient(new(endpoint), new AzureKeyCredential(apiKey));
+    var chatClient = azureOpenAIClient.GetChatClient(deploymentName).AsIChatClient();
+
+    services.AddChatClient(chatClient);
+
     services.AddDatabaseGpt(database =>
     {
         // For SQL Server.
@@ -42,9 +55,5 @@ static void ConfigureServices(HostBuilderContext context, IServiceCollection ser
         // For SQLite.
         //database.UseConfiguration(context.Configuration)
         //        .UseSqlite(context.Configuration.GetConnectionString("SqliteConnection"));
-    },
-    chatGpt =>
-    {
-        chatGpt.UseConfiguration(context.Configuration);
     });
 }

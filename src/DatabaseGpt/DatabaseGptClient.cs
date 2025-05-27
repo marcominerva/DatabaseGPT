@@ -1,15 +1,17 @@
-﻿using ChatGptNet;
-using ChatGptNet.Extensions;
-using DatabaseGpt.Abstractions;
+﻿using DatabaseGpt.Abstractions;
+using DatabaseGpt.Abstractions.Exceptions;
 using DatabaseGpt.Exceptions;
 using DatabaseGpt.Models;
 using DatabaseGpt.Settings;
+using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Caching.Hybrid;
 using Polly;
 using Polly.Registry;
+using ChatHistory = System.Collections.Generic.List<Microsoft.Extensions.AI.ChatMessage>;
 
 namespace DatabaseGpt;
 
-internal class DatabaseGptClient(IChatGptClient chatGptClient, ResiliencePipelineProvider<string> pipelineProvider, IServiceProvider serviceProvider, DatabaseGptSettings databaseGptSettings) : IDatabaseGptClient
+internal class DatabaseGptClient(IChatClient chatGptClient, HybridCache cache, ResiliencePipelineProvider<string> pipelineProvider, IServiceProvider serviceProvider, DatabaseGptSettings databaseGptSettings) : IDatabaseGptClient
 {
     private readonly IDatabaseGptProvider provider = databaseGptSettings.CreateProvider();
     private readonly ResiliencePipeline pipeline = pipelineProvider.GetPipeline(nameof(DatabaseGptClient));
@@ -39,8 +41,21 @@ internal class DatabaseGptClient(IChatGptClient chatGptClient, ResiliencePipelin
             var tables = await GetTablesAsync(sessionId, question, options, cancellationToken);
             var query = await GetQueryAsync(sessionId, question, tables, options, cancellationToken);
 
-            var reader = await provider.ExecuteQueryAsync(query, cancellationToken);
-            return (query, reader);
+            try
+            {
+                var reader = await provider.ExecuteQueryAsync(query, cancellationToken);
+                return (query, reader);
+            }
+            catch (DatabaseGptException ex)
+            {
+                // If there is an exception while executing the query, we log it in the chat history, so the assistant can learn from it.
+                var chat = await GetChatHistoryAsync(sessionId, cancellationToken);
+                chat.Add(new(ChatRole.Assistant, ex.ToString()));
+                await UpdateCacheAsync(sessionId, chat, cancellationToken);
+
+                //Rethrow the exception, so it will be handled by the pipeline.
+                throw;
+            }
         }, cancellationToken);
 
         return new(query, reader);
@@ -48,8 +63,10 @@ internal class DatabaseGptClient(IChatGptClient chatGptClient, ResiliencePipelin
 
     private async Task<Guid> CreateSessionAsync(Guid sessionId, CancellationToken cancellationToken)
     {
-        var conversationExists = await chatGptClient.ConversationExistsAsync(sessionId, cancellationToken);
-        if (!conversationExists)
+        sessionId = sessionId == default ? Guid.CreateVersion7() : sessionId;
+        var history = await GetChatHistoryAsync(sessionId, cancellationToken);
+
+        if (history.Count == 0)
         {
             var tables = await provider.GetTablesAsync(databaseGptSettings.IncludedTables, databaseGptSettings.ExcludedTables, cancellationToken);
 
@@ -67,7 +84,8 @@ internal class DatabaseGptClient(IChatGptClient chatGptClient, ResiliencePipelin
                     """;
             }
 
-            sessionId = await chatGptClient.SetupAsync(sessionId, systemMessage, cancellationToken);
+            history.Add(new(ChatRole.System, systemMessage));
+            await UpdateCacheAsync(sessionId, history, cancellationToken);
         }
 
         return sessionId;
@@ -90,9 +108,15 @@ internal class DatabaseGptClient(IChatGptClient chatGptClient, ResiliencePipelin
             await options.OnStarting.Invoke(serviceProvider);
         }
 
-        var response = await chatGptClient.AskAsync(sessionId, request, cancellationToken: cancellationToken);
+        var chat = await GetChatHistoryAsync(sessionId, cancellationToken);
+        chat.Add(new(ChatRole.User, request));
 
-        var candidateTables = response.GetContent()!.Trim('\'');
+        var response = await chatGptClient.GetResponseAsync(chat, cancellationToken: cancellationToken);
+
+        chat.Add(new(ChatRole.Assistant, response.Text));
+        await UpdateCacheAsync(sessionId, chat, cancellationToken);
+
+        var candidateTables = response.Text.Trim('\'');
         if (candidateTables == "NONE")
         {
             throw new NoTableFoundException($"No available information in the provided tables can be useful for the question '{question}'.");
@@ -134,9 +158,15 @@ internal class DatabaseGptClient(IChatGptClient chatGptClient, ResiliencePipelin
             request += $"{Environment.NewLine}{queryHints}";
         }
 
-        var response = await chatGptClient.AskAsync(sessionId, request, cancellationToken: cancellationToken);
+        var chat = await GetChatHistoryAsync(sessionId, cancellationToken);
+        chat.Add(new(ChatRole.User, request));
 
-        var query = response.GetContent()!;
+        var response = await chatGptClient.GetResponseAsync(chat, cancellationToken: cancellationToken);
+
+        chat.Add(new(ChatRole.Assistant, response.Text));
+        await UpdateCacheAsync(sessionId, chat, cancellationToken);
+
+        var query = response.Text;
         if (query == "NONE")
         {
             throw new InvalidSqlException($"The question '{question}' requires an INSERT, UPDATE or DELETE command, that isn't supported.");
@@ -153,6 +183,27 @@ internal class DatabaseGptClient(IChatGptClient chatGptClient, ResiliencePipelin
         }
 
         return query;
+    }
+
+    private async Task UpdateCacheAsync(Guid conversationId, ChatHistory chat, CancellationToken cancellationToken)
+    {
+        if (chat.Count > databaseGptSettings.MessageLimit)
+        {
+            chat.RemoveRange(0, chat.Count - databaseGptSettings.MessageLimit);
+        }
+
+        await cache.SetAsync(conversationId.ToString(), chat, cancellationToken: cancellationToken);
+    }
+
+    private async Task<ChatHistory> GetChatHistoryAsync(Guid conversationId, CancellationToken cancellationToken)
+    {
+        var historyCache = await cache.GetOrCreateAsync(conversationId.ToString(), (cancellationToken) =>
+        {
+            return ValueTask.FromResult<ChatHistory>([]);
+        }, cancellationToken: cancellationToken);
+
+        var chat = new ChatHistory(historyCache);
+        return chat;
     }
 
     protected virtual void Dispose(bool disposing)

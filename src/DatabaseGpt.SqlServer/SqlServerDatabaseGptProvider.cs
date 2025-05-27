@@ -4,7 +4,6 @@ using System.Text;
 using Dapper;
 using DatabaseGpt.Abstractions;
 using DatabaseGpt.Abstractions.Exceptions;
-using DatabaseGpt.SqlServer.Models;
 using Microsoft.Data.SqlClient;
 
 namespace DatabaseGpt.SqlServer;
@@ -68,7 +67,7 @@ public class SqlServerDatabaseGptProvider(SqlServerDatabaseGptProviderConfigurat
                     AND TABLE_SCHEMA + '.' + TABLE_NAME + '.' + COLUMN_NAME NOT IN @{nameof(excludedColumns)};
                 """;
 
-            var columns = await connection.QueryAsync<ColumnEntity>(query, new { schema = table.Schema, table = table.Name, excludedColumns });
+            var columns = await connection.QueryAsync<string>(query, new { schema = table.Schema, table = table.Name, excludedColumns });
 
             result.AppendLine($"CREATE TABLE [{table.Schema}].[{table.Name}] ({string.Join(',', columns)});");
         }

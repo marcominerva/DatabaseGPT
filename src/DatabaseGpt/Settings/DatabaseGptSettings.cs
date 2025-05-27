@@ -16,6 +16,8 @@ public class DatabaseGptSettings : IDatabaseGptSettings
 
     public int MaxRetries { get; set; } = 3;
 
+    public int MessageLimit { get; set; } = 10;
+
     public void SetDatabaseGptProviderFactory(Func<IDatabaseGptProvider> providerFactory)
     {
         ArgumentNullException.ThrowIfNull(providerFactory);
